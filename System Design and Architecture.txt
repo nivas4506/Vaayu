@@ -1,0 +1,391 @@
+# System Design and Architecture
+## Rural Healthcare Discovery and Referral Coordination Prototype
+**Working title:** Vaayu
+**Document version:** 1.0  
+**Prepared by:** Manus AI  
+**Date:** 25 August 2026  
+**Architecture style:** Responsive PWA + modular monolith backend + relational data store
+
+---
+
+## 1. Purpose
+
+This document defines the system design for a prototype that helps rural patients, caregivers and community health workers discover suitable public healthcare facilities, verify service availability before travelling, create and track referrals, and report inaccurate facility information. It also provides administrators with visibility into service gaps, stale data and referral problems.
+
+The design intentionally favors a **simple modular monolith** for the prototype. This approach keeps deployment and debugging manageable while preserving clear boundaries that can later be extracted into independent services if usage and integration requirements grow.
+
+> **Design principle:** The system coordinates access to healthcare; it does not diagnose patients, prescribe treatment or replace healthcare professionals.
+
+---
+
+## 2. Architecture Goals
+
+| Goal | Design response |
+|---|---|
+| Low-connectivity operation | Small payloads, cacheable read models, explicit offline and pending-sync states. |
+| Simple patient experience | Guided flow, plain-language service categories, icons, multilingual strings and large touch targets. |
+| Trustworthy availability | Status, source, confidence and last-updated timestamp are stored and displayed together. |
+| Referral continuity | Referral is a first-class entity with a lifecycle, destination and audit trail. |
+| Privacy by design | Minimal patient information, role-based access and synthetic data for the prototype. |
+| Rapid SIH demonstration | Seeded district data and mockable integration boundaries allow a complete demo without external dependencies. |
+| Future extensibility | Versioned REST APIs, configurable service taxonomy and adapters for maps, telemedicine and government systems. |
+| Operational visibility | Admin dashboard, event log, data freshness tracking and feedback workflow. |
+
+## 3. Constraints and Assumptions
+
+The prototype assumes that facility and service information is supplied by seeded data or authorized health-worker/facility updates. Availability is not guaranteed to be real-time; therefore, the architecture must never hide data freshness. The initial demo uses anonymized or synthetic patient references and does not store clinical records.
+
+The primary client is a mobile-first Progressive Web App. A user may access the same application as a patient, health worker, facility operator or administrator, but authorization determines which actions are visible. The prototype can run with a single backend deployment and a single relational database.
+
+---
+
+## 4. High-Level Architecture
+
+![High-level system architecture](https://private-us-east-1.manuscdn.com/sessionFile/9PBPRdp8XqTUaaDG6SEpoR/sandbox/DAT96x1IG0oGtWaIwC6HM0-images_1787849544355_na1fn_L2hvbWUvdWJ1bnR1L3J1cmFsLWhlYWx0aGNhcmUtYXJjaGl0ZWN0dXJl.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvOVBCUFJkcDhYcVRVYWFERzZTRXBvUi9zYW5kYm94L0RBVDk2eDFJRzBvR3RXYUl3QzZITTAtaW1hZ2VzXzE3ODc4NDk1NDQzNTVfbmExZm5fTDJodmJXVXZkV0oxYm5SMUwzSjFjbUZzTFdobFlXeDBhR05oY21VdFlYSmphR2wwWldOMGRYSmwucG5nIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzg5NDMwNDAwfX19XX0_&Key-Pair-Id=K2QY5QTL8JSY6C&Signature=MEUCIGXPv74Ap-fDmmyUP5~TJz2laHlDSdi2ZkQNz0~PZicQAiEAxr2UP5tXjLr9TN3h0lXf6kMsKM7dvn2Z0VRtZNBmQ-Q_)
+
+The architecture consists of five logical layers:
+
+1. **Experience layer:** Patient/caregiver PWA, health-worker workspace and administrator dashboard.
+2. **Application layer:** API, authentication, authorization, discovery, referrals, facility updates, feedback and analytics modules.
+3. **Data layer:** Relational database with geospatial fields, cache/read model, offline client storage and object storage for optional documents.
+4. **Integration layer:** Maps, SMS/WhatsApp or notification provider, telemedicine link and future public-health-system adapters.
+5. **Operations layer:** Monitoring, audit logging, backups, deployment pipeline and configuration management.
+
+The backend is designed as a modular monolith rather than a collection of microservices. Modules communicate through internal application interfaces and domain events, which preserves the option of later extraction without prematurely introducing distributed-system complexity.
+
+---
+
+## 5. Component Design
+
+### 5.1 Client applications
+
+**Patient and caregiver experience.** The PWA provides language selection, service-needs selection, location entry, facility discovery, facility details, route handoff, referral retrieval and feedback submission. It stores selected facility and referral details in browser storage for limited offline viewing.
+
+**Health-worker workspace.** The health-worker mode supports assisted search, patient-minimal referral creation, sharing of referral codes and reporting facility availability. It should remain usable on an inexpensive Android phone and tolerate intermittent connectivity.
+
+**Administrator dashboard.** The dashboard presents service gaps, stale updates, referral exceptions and feedback reports. It is not optimized for public access and requires authenticated staff access.
+
+### 5.2 Backend modules
+
+| Module | Responsibilities | Key interfaces |
+|---|---|---|
+| Identity and access | Login/session handling, role assignment, token validation and permission checks. | `POST /auth/session`, role middleware. |
+| Facility registry | Facility profile, location, hours, type and supported service catalogue. | `GET /facilities`, `GET /facilities/{id}`. |
+| Availability | Service status, freshness, source, confidence, schedules and update history. | `GET /facilities/{id}/availability`, `POST /availability-updates`. |
+| Discovery | Need-to-service mapping, filtering, ranking and alternate-facility suggestions. | `GET /discover`. |
+| Referral coordination | Referral creation, status transitions, destination acceptance and alternate routing. | `POST /referrals`, `GET /referrals/{code}`, `PATCH /referrals/{id}/status`. |
+| Feedback | User reports, correction requests, triage and resolution status. | `POST /feedback`, `GET /admin/feedback`. |
+| Administration | Dashboards, issue aggregation, facility management and audit views. | `GET /admin/metrics`, `GET /admin/issues`. |
+| Localization | Localized labels, service descriptions, error messages and accessibility text. | Versioned string catalogue. |
+| Notifications | Optional SMS, push or messaging notifications using provider adapters. | Internal notification interface. |
+| Audit and events | Immutable record of sensitive actions and domain events. | Audit repository and event publisher. |
+
+### 5.3 Data and infrastructure components
+
+| Component | Prototype choice | Purpose |
+|---|---|---|
+| Primary database | PostgreSQL; PostGIS extension if geographic ranking is enabled. | Transactional facility, availability, referral, user and feedback data. |
+| Cache | Redis or database-backed short-lived cache. | Cache popular facility searches and localized catalogues. Optional for first demo. |
+| Client storage | IndexedDB or equivalent browser storage. | Cached facility details, referral code and pending updates. |
+| Object storage | S3-compatible bucket, optional. | Future referral attachments or facility documents; not required for MVP. |
+| Background worker | In-process queue initially; separate worker later. | Notifications, aggregation, stale-data checks and sync retries. |
+| Observability | Structured logs, error tracking, health checks and metrics. | Diagnose failed flows and monitor data freshness. |
+
+---
+
+## 6. Core Data Flow
+
+### 6.1 Facility discovery flow
+
+1. The client collects a service need and location input.
+2. The API validates the request and maps the plain-language need to one or more service IDs.
+3. The discovery module queries facilities within the configured search area.
+4. The availability module evaluates status, freshness and confidence for each matching service.
+5. The ranking function scores candidates using service match, availability, distance, operating status and freshness.
+6. The API returns a compact result set with an explanation for each recommendation.
+7. The client renders the results and caches the selected facility details.
+
+### 6.2 Referral flow
+
+1. A patient or health worker selects a destination facility.
+2. The client submits a referral request containing minimal required information.
+3. The referral module creates a referral with status `CREATED` and a non-sequential public code.
+4. An event is recorded in the audit log and an optional notification is queued.
+5. The receiving facility accepts, rejects with a reason, marks the referral `READY_FOR_VISIT`, or redirects it.
+6. The patient or health worker retrieves the current status using the referral code.
+7. When completed, the referral is marked `COMPLETED`; if unavailable, the alternate-facility flow is invoked.
+
+### 6.3 Availability update flow
+
+1. Authorized staff or a health worker submits a service update.
+2. The API validates the actor, facility scope, service ID and status value.
+3. The previous state is retained in an update-history table.
+4. The current availability read model is updated transactionally.
+5. A domain event triggers dashboard aggregation and optional notification.
+6. The client displays source, confidence and timestamp with the status.
+
+### 6.4 Offline synchronization flow
+
+1. The client saves selected facility and referral data locally after a successful fetch.
+2. If a user submits a permitted update while offline, the client stores it in an outbox with `PENDING_SYNC`.
+3. When connectivity returns, the sync worker submits the outbox item with an idempotency key.
+4. The server accepts, rejects or requires review of the update.
+5. The client marks the item synchronized or presents a clear retry/review state.
+
+---
+
+## 7. Architecture Diagram Source
+
+The editable Mermaid source is provided with this document as `rural-healthcare-architecture.mmd`. It can be rendered into a PNG for presentations or design reviews.
+
+---
+
+## 8. API Design
+
+The prototype should expose versioned REST endpoints under `/api/v1`. Responses should be compact and return a stable envelope such as `{ data, meta, error }`. Every write endpoint should accept an idempotency key where retries are possible.
+
+### 8.1 Representative endpoints
+
+| Method | Endpoint | Purpose | Access |
+|---|---|---|---|
+| `GET` | `/api/v1/services` | List localized healthcare service categories. | Public. |
+| `GET` | `/api/v1/discover` | Find ranked facilities for a service need and location. | Public or assisted. |
+| `GET` | `/api/v1/facilities/{id}` | Return facility profile and availability. | Public. |
+| `POST` | `/api/v1/referrals` | Create a referral. | Health worker/facility staff. |
+| `GET` | `/api/v1/referrals/{code}` | Retrieve a referral timeline. | Code-based, rate-limited. |
+| `PATCH` | `/api/v1/referrals/{id}/status` | Advance or reject a referral. | Receiving/originating staff. |
+| `POST` | `/api/v1/availability-updates` | Submit facility service availability. | Authorized staff/health worker. |
+| `POST` | `/api/v1/feedback` | Report incorrect or missing information. | Public. |
+| `GET` | `/api/v1/admin/metrics` | Return dashboard metrics. | Administrator. |
+| `GET` | `/api/v1/admin/issues` | Return stale data, gaps and feedback issues. | Administrator. |
+
+### 8.2 Discovery response example
+
+```json
+{
+  "data": {
+    "query": {
+      "need": "blood_test",
+      "area": "Nandgaon"
+    },
+    "results": [
+      {
+        "facilityId": "fac_002",
+        "name": "Rampur PHC",
+        "type": "PHC",
+        "distanceKm": 8.2,
+        "match": ["consultation", "blood_test"],
+        "availability": {
+          "blood_test": "AVAILABLE",
+          "confidence": "FACILITY_REPORTED",
+          "updatedAt": "2026-08-25T08:30:00Z"
+        },
+        "explanation": "Provides the requested blood test and is the closest recently verified facility."
+      }
+    ]
+  },
+  "meta": { "freshnessWindowHours": 24 }
+}
+```
+
+---
+
+## 9. Data Model
+
+### 9.1 Relational entities
+
+| Table | Important columns | Notes |
+|---|---|---|
+| `users` | `id`, `role`, `phone_hash`, `preferred_language`, `status` | Avoid storing unnecessary identifiers in prototype. |
+| `facilities` | `id`, `name`, `type`, `address`, `latitude`, `longitude`, `hours`, `status` | Geographic index on coordinates. |
+| `services` | `id`, `category`, `key`, `icon`, `active` | Stable key used by localized strings. |
+| `facility_services` | `facility_id`, `service_id`, `capability_status` | Declares whether facility normally provides service. |
+| `availability_updates` | `id`, `facility_id`, `service_id`, `status`, `source`, `confidence`, `updated_by`, `updated_at` | Append-only history. |
+| `current_availability` | `facility_id`, `service_id`, `status`, `confidence`, `updated_at` | Fast read model. |
+| `referrals` | `id`, `public_code_hash`, `origin_facility_id`, `destination_facility_id`, `service_id`, `status`, `urgency`, `created_at` | Public code is stored hashed where feasible. |
+| `referral_events` | `id`, `referral_id`, `from_status`, `to_status`, `actor_id`, `reason`, `created_at` | Timeline and audit support. |
+| `feedback_reports` | `id`, `facility_id`, `category`, `description`, `reporter_role`, `status`, `created_at` | Data-quality workflow. |
+| `audit_events` | `id`, `actor_id`, `action`, `entity_type`, `entity_id`, `metadata`, `created_at` | Restricted access. |
+
+### 9.2 Referral state machine
+
+```text
+CREATED → ACCEPTED → READY_FOR_VISIT → COMPLETED
+    │         │              │
+    ├─────────┴──────────────┴→ REJECTED
+    │
+    └→ REDIRECTED → CREATED (new destination)
+```
+
+Only valid state transitions are accepted. A rejection or redirection must include a reason. Every transition creates a `referral_event` and an audit event.
+
+---
+
+## 10. Facility Ranking Logic
+
+The prototype ranking score should be understandable rather than opaque. A recommended candidate can be scored using normalized components:
+
+```text
+score = 0.40 × service_match
+      + 0.25 × availability_confidence
+      + 0.15 × freshness
+      + 0.10 × open_now
+      + 0.10 × distance_score
+```
+
+The score is only a sorting aid. The UI must show the contributing explanation and must not imply a clinical recommendation. When a required service is marked `UNAVAILABLE`, the facility should not rank as a valid match unless the user explicitly requests alternate or partial options.
+
+---
+
+## 11. Security, Privacy and Safety
+
+### 11.1 Authentication and authorization
+
+Patient discovery and public facility profiles can be accessed without an account. Staff workflows require authenticated access. Role-based authorization must restrict facility staff to their facility or assigned district, health workers to permitted update actions, and administrators to district-level or system-level reporting.
+
+Sessions should use secure, short-lived tokens or server-managed sessions. Sensitive writes require CSRF protection where cookie authentication is used, rate limiting and server-side permission checks. The client must never be trusted to enforce authorization.
+
+### 11.2 Data minimization
+
+The prototype should not collect a full medical history. A referral needs only a public code, requested service, destination, urgency category and minimal patient reference. Any future personal data must have a defined purpose, retention period, consent approach and access policy.
+
+### 11.3 Threat controls
+
+| Threat | Control |
+|---|---|
+| Referral-code guessing | High-entropy codes, hash storage, rate limits and lockout after repeated failures. |
+| Unauthorized facility edits | Authenticated staff, role checks, facility scope checks and audit events. |
+| Stale availability presented as current | Mandatory timestamps, source/confidence fields and stale-state UI. |
+| Injection and malformed input | Schema validation, parameterized queries and output encoding. |
+| Abuse of public feedback | Rate limiting, moderation status and anti-automation controls. |
+| Data leakage in logs | Redaction of codes, phone numbers and personal fields. |
+| Unsafe medical interpretation | No diagnosis, no prescription and explicit emergency handoff. |
+
+---
+
+## 12. Deployment Architecture
+
+### 12.1 Prototype deployment
+
+For the SIH prototype, deploy the PWA as static assets behind HTTPS and run the API and database in a managed environment or a single containerized application stack. Seed the database during deployment with the fictional district dataset. External integrations should be behind adapters and have mock implementations enabled by configuration.
+
+```text
+Internet
+   │
+   ▼
+HTTPS CDN / Static Hosting
+   │
+   ├── PWA assets
+   └── API reverse proxy
+           │
+           ▼
+     Backend application
+       ├── PostgreSQL
+       ├── Optional Redis
+       ├── Background worker
+       └── Object storage (optional)
+```
+
+### 12.2 Production evolution
+
+As adoption grows, separate the background worker, introduce a managed database with read replicas and backups, add a dedicated cache, use a queue for notifications and synchronization, and deploy regional observability. The domain modules can be extracted into services only when independent scaling, ownership or reliability requirements justify the additional operational complexity.
+
+### 12.3 Environments
+
+| Environment | Data | Purpose |
+|---|---|---|
+| Development | Local synthetic data | Feature development and unit testing. |
+| Staging | Synthetic district data | End-to-end testing and stakeholder review. |
+| Demo | Stable seeded data | SIH judging and scripted walkthrough. |
+| Production/pilot | Approved operational data | Only after governance, security and integration review. |
+
+---
+
+## 13. Reliability and Observability
+
+The API should expose health checks for application, database and queue dependencies. Structured logs should include request ID, route, actor role, outcome and latency while excluding personal data. Metrics should cover discovery latency, referral creation failures, referral status age, stale availability count, sync failures and feedback backlog.
+
+The system should degrade gracefully. If maps are unavailable, show address and approximate distance. If notifications fail, retain the referral in the database and display the code in the application. If live availability cannot be refreshed, return cached data with an explicit freshness warning rather than failing the entire discovery response.
+
+Recommended service-level targets for the prototype are:
+
+| Measure | Target |
+|---|---:|
+| API success rate in demo environment | ≥ 99% during scripted demonstration |
+| P95 discovery response time with seeded data | < 1 second |
+| P95 referral creation response time | < 1.5 seconds |
+| Successful retry of queued offline updates | ≥ 95% in test scenarios |
+| Audit coverage for staff writes | 100% |
+
+---
+
+## 14. Testing Strategy
+
+**Unit tests** should cover service-need mapping, ranking explanations, availability freshness calculations, referral state transitions, authorization rules and input validation.
+
+**Integration tests** should cover discovery against the database, referral creation and retrieval, availability history, dashboard aggregation and idempotent synchronization.
+
+**End-to-end tests** should reproduce the SIH scenario: a patient needs consultation plus a diagnostic test, the closest facility cannot provide the test, an alternate facility is selected, a referral is created and the administrator sees the gap.
+
+**Accessibility tests** should verify keyboard navigation, semantic labels, contrast, text scaling, focus order and understandable error messages. **Connectivity tests** should simulate slow network, request failure, stale cache and reconnect synchronization.
+
+---
+
+## 15. Technology Recommendation
+
+| Layer | Recommended technology | Rationale |
+|---|---|---|
+| Frontend | React + TypeScript + responsive CSS/Tailwind | Fast prototype development and reusable components. |
+| PWA | Service worker + IndexedDB | Install-free access and offline cache/outbox. |
+| Backend | Node.js/TypeScript modular API or FastAPI | Clear REST interfaces and rapid implementation. |
+| Database | PostgreSQL + optional PostGIS | Strong relational consistency and location queries. |
+| Cache | Redis, optional in MVP | Useful for repeated discovery queries and rate limits. |
+| Authentication | Managed session/OAuth for staff or OTP adapter | Avoid custom credential handling in prototype. |
+| Notifications | Adapter interface with mock provider | Keeps demo independent from SMS/WhatsApp credentials. |
+| Maps | External map-link adapter | Avoids building routing; fallback to address text. |
+| Deployment | Docker-compatible managed hosting | Reproducible staging and demo environments. |
+
+For an SIH prototype, do not begin with microservices, Kubernetes or a complex event-streaming platform. The user value is demonstrated by the patient journey and trustworthy status handling, not by infrastructure complexity.
+
+---
+
+## 16. Risks and Design Decisions
+
+| Decision or risk | Resolution |
+|---|---|
+| Real-time data is unavailable | Model freshness and confidence explicitly; use seeded or staff-reported updates. |
+| Public users may not have smartphones | Support health-worker-assisted access and shareable/printable referral summaries. |
+| Language support expands scope | Externalize strings and begin with English plus one target regional language. |
+| Maps are unreliable in low-connectivity areas | Display text directions/address and make map integration optional. |
+| Personal data creates governance burden | Use minimal referral information and synthetic data in the prototype. |
+| Microservices slow the hackathon | Use modular monolith with clear module boundaries. |
+| Wrong facility ranking could harm trust | Explain ranking, allow filters and show alternates instead of hiding uncertainty. |
+
+---
+
+## 17. Implementation Sequence
+
+1. Set up the PWA shell, language catalogue, role modes and responsive design system.
+2. Create the database schema and seed the fictional district facilities, services and availability states.
+3. Implement facility profiles and the discovery endpoint with transparent ranking.
+4. Implement referral creation, code retrieval, status transitions and audit events.
+5. Implement health-worker updates, feedback and the administrator dashboard.
+6. Add IndexedDB caching, offline simulation and synchronization states.
+7. Add accessibility, security, error-state and connectivity tests.
+8. Run the scripted SIH demonstration and verify every acceptance criterion.
+
+---
+
+## 18. Final Architecture Summary
+
+The recommended architecture is a **mobile-first multilingual PWA backed by a modular monolith API and PostgreSQL database**, with optional Redis, background jobs and integration adapters. Its most important architectural characteristics are not technology-specific: it treats availability freshness as data, treats referrals as a stateful workflow, minimizes personal information, supports assisted and low-connectivity use, and exposes clear administrative signals about service gaps.
+
+This architecture is sufficiently small for a hackathon prototype, sufficiently structured for team development, and sufficiently extensible to support a later pilot with facility staff, community health workers and public-health administrators.
+
+---
+
+## References
+
+[1]: `/home/ubuntu/upload/pasted_content.txt` "Smart India Hackathon Problem Statement 87 — Accessibility and Quality of Public Healthcare Services, Particularly in Rural and Underserved Areas"
+
+*This design is a proposed prototype architecture derived from the supplied problem statement. It is not a production clinical system design and requires security, privacy, clinical-safety and public-health governance review before real-world deployment.*

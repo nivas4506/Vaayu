@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "serviceName": "Vaayu SehatReach Rural Healthcare Coordination Platform",
+  "apiVersion": "v1",
+  "apiPrefix": "/api/v1",
+  "ports": {
+    "backendApi": 3000,
+    "frontendDev": 5173
+  },
+  "endpoints": {
+    "discovery": {
+      "path": "/discover",
+      "methods": ["GET"],
+      "description": "Geospatial and need-based ranking of healthcare facilities across India."
+    },
+    "pincode": {
+      "path": "/pincode/:code",
+      "methods": ["GET"],
+      "description": "All-India postal PIN directory lookup with in-memory caching for ~19,300 PIN codes."
+    },
+    "referrals": {
+      "path": "/referrals",
+      "methods": ["POST", "GET", "PATCH"],
+      "description": "Digital patient referral ticketing and lifecycle state machine."
+    },
+    "availability": {
+      "path": "/availability-updates",
+      "methods": ["POST"],
+      "description": "Real-time facility equipment, staff, and bed capacity status broadcaster."
+    },
+    "sync": {
+      "path": "/sync",
+      "methods": ["POST"],
+      "description": "Batch synchronization engine for offline browser outbox transactions."
+    },
+    "admin": {
+      "path": "/admin",
+      "methods": ["GET"],
+      "description": "District health administrator telemetry, operational KPIs, and service gap monitoring."
+    }
+  },
+  "roles": [
+    "PATIENT",
+    "ASHA",
+    "FACILITY_STAFF",
+    "DISTRICT_ADMIN"
+  ]
+}

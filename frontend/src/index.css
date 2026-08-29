@@ -1,0 +1,373 @@
+/* ==========================================================================
+   VAAYU — Organic Warmth Design System
+   Low-Bandwidth, Tactile, High-Legibility Rural Healthcare UI
+   ========================================================================== */
+
+:root {
+  /* Core Earthy HSL Palette */
+  --hue-forest: 154;
+  --hue-terracotta: 14;
+  --hue-sand: 38;
+  --hue-clay: 145;
+
+  /* Organic Warmth Color Tokens */
+  --bg-primary: #111614;
+  --bg-secondary: #161e1a;
+  --bg-card: #1c2621;
+  --bg-card-hover: #22302a;
+  --bg-elevated: #283932;
+  
+  --border-subtle: rgba(74, 120, 95, 0.2);
+  --border-medium: rgba(74, 120, 95, 0.35);
+  --border-active: rgba(62, 163, 119, 0.6);
+
+  /* Primary Accent: Sage Forest */
+  --color-sage-light: #52c292;
+  --color-sage: #3ba377;
+  --color-sage-dark: #205c43;
+  --color-sage-glow: rgba(59, 163, 119, 0.25);
+
+  /* Accent 2: Terracotta Rust (Critical / Urgency / Alerts) */
+  --color-terracotta-light: #f07b5a;
+  --color-terracotta: #c45d3e;
+  --color-terracotta-dark: #803721;
+  --color-terracotta-glow: rgba(196, 93, 62, 0.25);
+
+  /* Accent 3: Sand Ochre (Limited Capacity / Cautions / Info) */
+  --color-sand-light: #f7cb7e;
+  --color-sand: #d4973b;
+  --color-sand-dark: #7a531b;
+  --color-sand-glow: rgba(212, 151, 59, 0.25);
+
+  /* Text Hierarchy */
+  --text-pure: #f5f8f6;
+  --text-subtle: #b2c7bd;
+  --text-muted: #728c80;
+  --text-faint: #44594f;
+
+  /* Status Colors */
+  --status-available-bg: rgba(32, 92, 67, 0.45);
+  --status-available-border: rgba(59, 163, 119, 0.5);
+  --status-available-text: #6ee7b7;
+
+  --status-limited-bg: rgba(122, 83, 27, 0.45);
+  --status-limited-border: rgba(212, 151, 59, 0.5);
+  --status-limited-text: #fcd34d;
+
+  --status-unavailable-bg: rgba(128, 55, 33, 0.45);
+  --status-unavailable-border: rgba(196, 93, 62, 0.5);
+  --status-unavailable-text: #fca5a5;
+
+  --status-stale-bg: rgba(76, 29, 149, 0.45);
+  --status-stale-border: rgba(147, 51, 234, 0.5);
+  --status-stale-text: #d8b4fe;
+
+  /* Spacing & Radii */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 9999px;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+  --shadow-glow-sage: 0 0 24px -4px var(--color-sage-glow);
+  --shadow-glow-terracotta: 0 0 24px -4px var(--color-terracotta-glow);
+
+  /* Typography */
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ==========================================================================
+   CSS Reset & Base Setup
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-pure);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle organic grain overlay texture */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 15% 15%, rgba(45, 122, 88, 0.08), transparent 40%),
+    radial-gradient(circle at 85% 75%, rgba(196, 93, 62, 0.06), transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(212, 151, 59, 0.04), transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-pure);
+  line-height: 1.25;
+}
+
+a {
+  color: var(--color-sage-light);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+a:hover {
+  color: #a7f3d0;
+  text-decoration: underline;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   Utility Classes & Design Components
+   ========================================================================== */
+
+.app-container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* Tactile Warm Cards */
+.organic-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.organic-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(82, 194, 146, 0.35), transparent);
+  opacity: 0.6;
+}
+
+.organic-card:hover {
+  background-color: var(--bg-card-hover);
+  border-color: var(--border-medium);
+}
+
+.organic-card-interactive {
+  cursor: pointer;
+}
+.organic-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), var(--shadow-glow-sage);
+}
+
+/* Form Controls */
+.organic-input, .organic-select, .organic-textarea {
+  width: 100%;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  color: var(--text-pure);
+  font-family: var(--font-body);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.organic-input:focus, .organic-select:focus, .organic-textarea:focus {
+  border-color: var(--color-sage);
+  background-color: #1a2520;
+  box-shadow: 0 0 0 3px var(--color-sage-glow);
+}
+
+.organic-input::placeholder, .organic-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--color-sage), #2a7353);
+  color: #0c1812;
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: 0.02em;
+  padding: 11px 22px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(45, 122, 88, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #48b788, var(--color-sage));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(45, 122, 88, 0.5);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-terracotta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--color-terracotta), #9c4125);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 11px 22px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(196, 93, 62, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-terracotta:hover {
+  background: linear-gradient(135deg, #d86c4c, var(--color-terracotta));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(196, 93, 62, 0.5);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: rgba(40, 57, 50, 0.6);
+  color: var(--text-pure);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background-color: var(--bg-elevated);
+  border-color: var(--border-medium);
+  color: #ffffff;
+}
+
+/* Pill Badges */
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid;
+  line-height: 1.3;
+}
+
+.badge-available {
+  background-color: var(--status-available-bg);
+  border-color: var(--status-available-border);
+  color: var(--status-available-text);
+}
+
+.badge-limited {
+  background-color: var(--status-limited-bg);
+  border-color: var(--status-limited-border);
+  color: var(--status-limited-text);
+}
+
+.badge-unavailable {
+  background-color: var(--status-unavailable-bg);
+  border-color: var(--status-unavailable-border);
+  color: var(--status-unavailable-text);
+}
+
+.badge-stale {
+  background-color: var(--status-stale-bg);
+  border-color: var(--status-stale-border);
+  color: var(--status-stale-text);
+}
+
+/* Animations */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner-icon {
+  animation: spin 0.9s linear infinite;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-elevated);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-medium);
+}

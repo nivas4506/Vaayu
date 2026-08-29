@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "name": "Vaayu Healthcare Database Configuration",
+  "engine": "PostgreSQL",
+  "version": "16+",
+  "defaultPort": 5432,
+  "databaseName": "vaayu",
+  "schemaFile": "backend/src/db/schema.sql",
+  "seedFile": "backend/src/db/seed.ts",
+  "modes": {
+    "inMemory": {
+      "provider": "pg-mem",
+      "flag": "USE_PG_MEM=true",
+      "description": "Zero-dependency in-memory PostgreSQL engine for instantaneous development and isolated automated unit tests."
+    },
+    "persistent": {
+      "provider": "pg (PostgreSQL)",
+      "flag": "USE_PG_MEM=false",
+      "description": "Production connection pool targeting local or managed PostgreSQL instance."
+    }
+  },
+  "tables": [
+    "facilities",
+    "services",
+    "facility_services",
+    "service_availability_logs",
+    "referrals",
+    "referral_events",
+    "data_quality_reports",
+    "audit_logs",
+    "idempotency_keys"
+  ]
+}
