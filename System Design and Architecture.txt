@@ -45,10 +45,10 @@ The primary client is a mobile-first Progressive Web App. A user may access the 
 
 The architecture consists of five logical layers:
 
-1. **Experience layer:** Patient/caregiver PWA, health-worker workspace and administrator dashboard.
-2. **Application layer:** API, authentication, authorization, discovery, referrals, facility updates, feedback and analytics modules.
+1. **Experience layer:** Patient/caregiver PWA, health-worker workspace, quick SOS emergency trigger, and administrator dashboard.
+2. **Application layer:** API, authentication, authorization, discovery, referrals, emergency coordination, facility updates, feedback and analytics modules.
 3. **Data layer:** Relational database with geospatial fields, cache/read model, offline client storage and object storage for optional documents.
-4. **Integration layer:** Maps, SMS/WhatsApp or notification provider, telemedicine link and future public-health-system adapters.
+4. **Integration layer:** Maps, SMS/WhatsApp or notification provider, telemedicine link, ambulance / emergency dispatch services (SOS), and future public-health-system adapters.
 5. **Operations layer:** Monitoring, audit logging, backups, deployment pipeline and configuration management.
 
 The backend is designed as a modular monolith rather than a collection of microservices. Modules communicate through internal application interfaces and domain events, which preserves the option of later extraction without prematurely introducing distributed-system complexity.
@@ -59,11 +59,11 @@ The backend is designed as a modular monolith rather than a collection of micros
 
 ### 5.1 Client applications
 
-**Patient and caregiver experience.** The PWA provides language selection, service-needs selection, location entry, facility discovery, facility details, route handoff, referral retrieval and feedback submission. It stores selected facility and referral details in browser storage for limited offline viewing.
+**Patient and caregiver experience.** The PWA provides language selection, service-needs selection, location entry, facility discovery, facility details, route handoff, referral retrieval, feedback submission, and a quick SOS trigger for immediate local emergency services. It stores selected facility, referral, and emergency contacts in browser storage for offline access.
 
-**Health-worker workspace.** The health-worker mode supports assisted search, patient-minimal referral creation, sharing of referral codes and reporting facility availability. It should remain usable on an inexpensive Android phone and tolerate intermittent connectivity.
+**Health-worker workspace.** The health-worker mode supports assisted search, patient-minimal referral creation, sharing of referral codes, reporting facility availability, and launching emergency triggers. It should remain usable on an inexpensive Android phone and tolerate intermittent connectivity.
 
-**Administrator dashboard.** The dashboard presents service gaps, stale updates, referral exceptions and feedback reports. It is not optimized for public access and requires authenticated staff access.
+**Administrator dashboard.** The dashboard presents service gaps, stale updates, referral exceptions, feedback reports, and emergency/SOS activation histories. It is not optimized for public access and requires authenticated staff access.
 
 ### 5.2 Backend modules
 
@@ -74,6 +74,7 @@ The backend is designed as a modular monolith rather than a collection of micros
 | Availability | Service status, freshness, source, confidence, schedules and update history. | `GET /facilities/{id}/availability`, `POST /availability-updates`. |
 | Discovery | Need-to-service mapping, filtering, ranking and alternate-facility suggestions. | `GET /discover`. |
 | Referral coordination | Referral creation, status transitions, destination acceptance and alternate routing. | `POST /referrals`, `GET /referrals/{code}`, `PATCH /referrals/{id}/status`. |
+| Emergency & SOS | Logging emergency activations, coordinating with nearest ambulance dispatch, and alert broadcast. | `POST /sos/trigger`, `GET /sos/status/{id}`. |
 | Feedback | User reports, correction requests, triage and resolution status. | `POST /feedback`, `GET /admin/feedback`. |
 | Administration | Dashboards, issue aggregation, facility management and audit views. | `GET /admin/metrics`, `GET /admin/issues`. |
 | Localization | Localized labels, service descriptions, error messages and accessibility text. | Versioned string catalogue. |
