@@ -16,6 +16,7 @@ export const ENV = {
   USE_REDIS: process.env.USE_REDIS === 'true',
   MAPPLS_ACCESS_TOKEN: process.env.MAPPLS_ACCESS_TOKEN || 'cpcikplvzslyriwgqhowlttlwinuebgpunrn',
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
+  TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
   TWILIO_API_KEY_SID: process.env.TWILIO_API_KEY_SID || '',
   TWILIO_API_KEY_SECRET: process.env.TWILIO_API_KEY_SECRET || '',
   TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || '+13464856870',

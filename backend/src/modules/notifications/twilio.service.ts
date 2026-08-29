@@ -6,12 +6,12 @@ let twilioClient: any = null;
 function getTwilioClient() {
   if (twilioClient) return twilioClient;
 
-  if (ENV.TWILIO_API_KEY_SID && ENV.TWILIO_API_KEY_SECRET && ENV.TWILIO_ACCOUNT_SID) {
+  if (ENV.TWILIO_ACCOUNT_SID && ENV.TWILIO_AUTH_TOKEN) {
+    twilioClient = twilio(ENV.TWILIO_ACCOUNT_SID, ENV.TWILIO_AUTH_TOKEN);
+  } else if (ENV.TWILIO_API_KEY_SID && ENV.TWILIO_API_KEY_SECRET && ENV.TWILIO_ACCOUNT_SID) {
     twilioClient = twilio(ENV.TWILIO_API_KEY_SID, ENV.TWILIO_API_KEY_SECRET, {
       accountSid: ENV.TWILIO_ACCOUNT_SID,
     });
-  } else if (ENV.TWILIO_ACCOUNT_SID && ENV.TWILIO_API_KEY_SECRET) {
-    twilioClient = twilio(ENV.TWILIO_ACCOUNT_SID, ENV.TWILIO_API_KEY_SECRET);
   }
   return twilioClient;
 }
