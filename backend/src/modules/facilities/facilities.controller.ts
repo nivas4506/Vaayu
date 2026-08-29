@@ -47,7 +47,7 @@ export async function getFacilityController(req: Request, res: Response, next: N
 
 export function listServicesTaxonomyController(req: Request, res: Response, next: NextFunction) {
   try {
-    const services = db.prepare(`SELECT * FROM services WHERE active = 1 ORDER BY category, id`).all();
+    const services = db.prepare(`SELECT * FROM services WHERE active = true ORDER BY category, id`).all();
     return res.json({
       data: services,
       meta: { total: services.length, timestamp: new Date().toISOString() },
