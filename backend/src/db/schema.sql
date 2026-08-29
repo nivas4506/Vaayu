@@ -104,3 +104,15 @@ CREATE TABLE IF NOT EXISTS audit_events (
     metadata TEXT,
     created_at TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS sos_triggers (
+    id TEXT PRIMARY KEY,
+    reporter_id TEXT,
+    reporter_role TEXT,
+    latitude REAL,
+    longitude REAL,
+    status TEXT,
+    ambulance_id TEXT,
+    created_at TIMESTAMP,
+    resolved_at TIMESTAMP
+);

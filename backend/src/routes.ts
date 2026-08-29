@@ -9,6 +9,7 @@ import { submitFeedbackController, listFeedbackController } from './modules/feed
 import { getAdminMetricsController, getAdminIssuesController } from './modules/admin/admin.controller.js';
 import { processBatchSyncController } from './modules/sync/sync.controller.js';
 import { lookupPincodeController } from './modules/pincode/pincode.controller.js';
+import { submitSosController, getSosStatusController } from './modules/sos/sos.controller.js';
 
 export const apiRouter = Router();
 
@@ -31,6 +32,10 @@ apiRouter.get('/discover', discoverFacilitiesController);
 
 // India Postal PIN Code Lookup (Public)
 apiRouter.get('/pincode/:code', lookupPincodeController);
+
+// Emergency & SOS Trigger Endpoints
+apiRouter.post('/sos/trigger', rbac(['PATIENT', 'ASHA', 'FACILITY_STAFF', 'ADMIN']), idempotency, submitSosController);
+apiRouter.get('/sos/status/:id', getSosStatusController);
 
 // Referral Coordination Endpoints
 apiRouter.post('/referrals', rbac(['ASHA', 'FACILITY_STAFF', 'ADMIN']), idempotency, createReferralController);
