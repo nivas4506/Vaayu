@@ -1,4 +1,5 @@
 import { db } from '../../db/client.js';
+import { cache } from '../../db/cache.js';
 
 export function submitAvailabilityUpdate(data: {
   facilityId: string;
@@ -76,6 +77,10 @@ export function submitAvailabilityUpdate(data: {
   });
 
   updateCurrent();
+
+  // Invalidate discovery and facilities caches asynchronously in background
+  cache.clearPattern('discover:*').catch(err => console.error('[Cache Error] Failed to clear discover pattern:', err));
+  cache.clearPattern('facilities:*').catch(err => console.error('[Cache Error] Failed to clear facilities pattern:', err));
 
   return db.prepare(`
     SELECT ca.*, s.key as service_key

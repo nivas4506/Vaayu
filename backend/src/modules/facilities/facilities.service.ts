@@ -1,7 +1,15 @@
 import { db } from '../../db/client.js';
 import { ENV } from '../../config/env.js';
+import { cache } from '../../db/cache.js';
 
-export function getAllFacilities(filters?: { type?: string; pincode?: string }) {
+export async function getAllFacilities(filters?: { type?: string; pincode?: string }) {
+  const typeFilter = filters?.type || '';
+  const pincodeFilter = filters?.pincode || '';
+  const cacheKey = `facilities:list:${typeFilter}:${pincodeFilter}`;
+
+  const cached = await cache.get<any[]>(cacheKey);
+  if (cached) return cached;
+
   let query = `SELECT * FROM facilities WHERE status = 'ACTIVE'`;
   const params: any[] = [];
 
@@ -18,7 +26,7 @@ export function getAllFacilities(filters?: { type?: string; pincode?: string }) 
 
   const facilities = db.prepare(query).all(...params) as any[];
 
-  return facilities.map((fac) => {
+  const result = facilities.map((fac) => {
     const services = db.prepare(`
       SELECT ca.*, s.category, s.key as service_key, s.icon
       FROM current_availability ca
@@ -42,9 +50,16 @@ export function getAllFacilities(filters?: { type?: string; pincode?: string }) 
       }))
     };
   });
+
+  await cache.set(cacheKey, result, 600); // Cache for 10 minutes
+  return result;
 }
 
-export function getFacilityById(id: string) {
+export async function getFacilityById(id: string) {
+  const cacheKey = `facilities:detail:${id}`;
+  const cached = await cache.get<any>(cacheKey);
+  if (cached) return cached;
+
   const fac = db.prepare(`SELECT * FROM facilities WHERE id = ?`).get(id) as any;
   if (!fac) return null;
 
@@ -55,7 +70,7 @@ export function getFacilityById(id: string) {
     WHERE ca.facility_id = ?
   `).all(id) as any[];
 
-  return {
+  const result = {
     ...fac,
     services: services.map((s) => ({
       serviceId: s.service_id,
@@ -70,4 +85,7 @@ export function getFacilityById(id: string) {
       isStale: (Date.now() - new Date(s.updated_at).getTime()) > ENV.FRESHNESS_WINDOW_HOURS * 3600 * 1000
     }))
   };
+
+  await cache.set(cacheKey, result, 600); // Cache for 10 minutes
+  return result;
 }

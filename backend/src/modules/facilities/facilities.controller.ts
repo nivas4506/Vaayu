@@ -2,12 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { getAllFacilities, getFacilityById } from './facilities.service.js';
 import { db } from '../../db/client.js';
 
-export function listFacilitiesController(req: Request, res: Response, next: NextFunction) {
+export async function listFacilitiesController(req: Request, res: Response, next: NextFunction) {
   try {
     const type = req.query.type as string | undefined;
     const pincode = req.query.pincode as string | undefined;
 
-    const facilities = getAllFacilities({ type, pincode });
+    const facilities = await getAllFacilities({ type, pincode });
 
     return res.json({
       data: facilities,
@@ -22,10 +22,10 @@ export function listFacilitiesController(req: Request, res: Response, next: Next
   }
 }
 
-export function getFacilityController(req: Request, res: Response, next: NextFunction) {
+export async function getFacilityController(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
-    const facility = getFacilityById(id);
+    const facility = await getFacilityById(id);
 
     if (!facility) {
       return res.status(404).json({

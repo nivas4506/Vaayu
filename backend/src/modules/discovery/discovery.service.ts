@@ -1,5 +1,6 @@
 import { db } from '../../db/client.js';
 import { ENV } from '../../config/env.js';
+import { cache } from '../../db/cache.js';
 
 // Haversine formula to compute distance in km
 export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -14,7 +15,7 @@ export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lo
   return Math.round(R * c * 10) / 10;
 }
 
-export function discoverFacilities(params: {
+export async function discoverFacilities(params: {
   need: string; // e.g. "blood_test", "consultation", "xray"
   userLat?: number;
   userLng?: number;
@@ -26,6 +27,10 @@ export function discoverFacilities(params: {
   // Default fallback coords (Rampur area) if not provided
   const userLat = params.userLat ?? 23.2100;
   const userLng = params.userLng ?? 80.0120;
+
+  const cacheKey = `discover:${need}:${pincode || ''}:${village || ''}:${userLat}:${userLng}`;
+  const cached = await cache.get<any>(cacheKey);
+  if (cached) return cached;
 
   const facilities = db.prepare(`SELECT * FROM facilities WHERE status = 'ACTIVE'`).all() as any[];
 
@@ -128,10 +133,13 @@ export function discoverFacilities(params: {
     };
   }
 
-  return {
+  const finalResult = {
     query: { need, pincode, village, userLat, userLng },
     results,
     serviceGapDetected,
     gapDetails
   };
+
+  await cache.set(cacheKey, finalResult, 300); // Cache for 5 minutes (300 seconds)
+  return finalResult;
 }

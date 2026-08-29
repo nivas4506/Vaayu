@@ -1,4 +1,5 @@
 import { db } from '../../db/client.js';
+import { cache } from '../../db/cache.js';
 
 // Pre-cached local PIN code database for Jabalpur rural district fallback
 const LOCAL_PINCODE_CACHE: Record<string, { district: string; state: string; block: string; division?: string; villages: string[]; postOffices?: any[] }> = {
@@ -46,12 +47,13 @@ const LOCAL_PINCODE_CACHE: Record<string, { district: string; state: string; blo
   }
 };
 
-// Dynamic in-memory LRU-like cache for all lookups across India
-const RUNTIME_PINCODE_CACHE = new Map<string, any>();
-
 export async function lookupIndiaPincode(pincode: string) {
   let source = 'LOCAL_CACHE';
-  let pincodeData: any = LOCAL_PINCODE_CACHE[pincode] || RUNTIME_PINCODE_CACHE.get(pincode) || null;
+  let pincodeData: any = LOCAL_PINCODE_CACHE[pincode] || (await cache.get(`pincode:${pincode}`)) || null;
+
+  if (pincodeData && LOCAL_PINCODE_CACHE[pincode] === undefined) {
+    source = 'INDIA_POST_API'; // Restored from cache
+  }
 
   // Fetch live from official India Post API for all 19,000+ PIN codes across India
   if (!pincodeData) {
@@ -89,8 +91,8 @@ export async function lookupIndiaPincode(pincode: string) {
           }))
         };
 
-        // Cache for subsequent fast lookups
-        RUNTIME_PINCODE_CACHE.set(pincode, pincodeData);
+        // Cache for subsequent fast lookups (TTL: 24 hours)
+        await cache.set(`pincode:${pincode}`, pincodeData, 86400);
       }
     } catch (err) {
       console.warn(`[Pincode Service] India Post API offline or timed out for ${pincode}, fallback to local database.`);
