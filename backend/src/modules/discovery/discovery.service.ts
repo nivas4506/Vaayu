@@ -15,6 +15,50 @@ export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lo
   return Math.round(R * c * 10) / 10;
 }
 
+async function fetchMapplsDistances(
+  userLat: number,
+  userLng: number,
+  facilities: { id: string; latitude: number; longitude: number }[]
+): Promise<Record<string, number>> {
+  if (!ENV.MAPPLS_ACCESS_TOKEN || facilities.length === 0) {
+    return {};
+  }
+
+  try {
+    const sourceCoord = `${userLng},${userLat}`;
+    const destCoords = facilities.map(f => `${f.longitude},${f.latitude}`).join(';');
+    const coordsString = `${sourceCoord};${destCoords}`;
+
+    const url = `https://route.mappls.com/route/dm/distance_matrix/driving/${coordsString}?access_token=${ENV.MAPPLS_ACCESS_TOKEN}`;
+
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(4000) // 4 seconds timeout
+    });
+
+    if (!response.ok) {
+      throw new Error(`Mappls responded with status ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+
+    if (data && data.results && data.results[0] && Array.isArray(data.results[0].distances)) {
+      const distances = data.results[0].distances;
+      const distanceMap: Record<string, number> = {};
+
+      facilities.forEach((fac, idx) => {
+        const distMeters = distances[idx + 1];
+        if (typeof distMeters === 'number') {
+          distanceMap[fac.id] = Math.round((distMeters / 1000) * 10) / 10;
+        }
+      });
+      return distanceMap;
+    }
+  } catch (err) {
+    console.warn('[Discovery Service] Mappls API failed or timed out, falling back to Haversine straight-line distance calculations.', err);
+  }
+  return {};
+}
+
 export async function discoverFacilities(params: {
   need: string; // e.g. "blood_test", "consultation", "xray"
   userLat?: number;
@@ -34,6 +78,9 @@ export async function discoverFacilities(params: {
 
   const facilities = db.prepare(`SELECT * FROM facilities WHERE status = 'ACTIVE'`).all() as any[];
 
+  // Retrieve driving distances via Mappls Distance Matrix API, fallback to Haversine straight-line if offline or error
+  const mapplsDistances = await fetchMapplsDistances(userLat, userLng, facilities);
+
   let serviceGapDetected = false;
   let gapDetails: any = null;
 
@@ -46,7 +93,7 @@ export async function discoverFacilities(params: {
       WHERE ca.facility_id = ? AND ca.service_id = ?
     `).get(fac.id, need) as any;
 
-    const distanceKm = calculateDistanceKm(userLat, userLng, fac.latitude, fac.longitude);
+    const distanceKm = mapplsDistances[fac.id] ?? calculateDistanceKm(userLat, userLng, fac.latitude, fac.longitude);
 
     // Scoring metrics
     const serviceMatchScore = avail ? 1.0 : 0.0;

@@ -14,4 +14,5 @@ export const ENV = {
   FRESHNESS_WINDOW_HOURS: 48,
   REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6379',
   USE_REDIS: process.env.USE_REDIS === 'true',
+  MAPPLS_ACCESS_TOKEN: process.env.MAPPLS_ACCESS_TOKEN || 'cpcikplvzslyriwgqhowlttlwinuebgpunrn',
 };
