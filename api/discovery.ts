@@ -1,5 +1,5 @@
 import { apiFetch } from './client';
-import { Facility } from '../frontend/src/types/index';
+import { Facility } from './types';
 
 export interface DiscoverParams {
   pincode: string;

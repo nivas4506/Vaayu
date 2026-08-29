@@ -1,5 +1,5 @@
 import { apiFetch } from './client';
-import { ServiceAvailabilityStatus, OfflineOutboxItem } from '../frontend/src/types/index';
+import { ServiceAvailabilityStatus, OfflineOutboxItem } from './types';
 
 export interface UpdateAvailabilityPayload {
   facilityId: string;

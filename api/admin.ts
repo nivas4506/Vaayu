@@ -1,5 +1,5 @@
 import { apiFetch } from './client';
-import { AdminKPIs, AdminIssuesResponse } from '../frontend/src/types/index';
+import { AdminKPIs, AdminIssuesResponse } from './types';
 
 export async function getAdminDashboardMetrics(): Promise<AdminKPIs> {
   return apiFetch<AdminKPIs>('/admin/metrics', {

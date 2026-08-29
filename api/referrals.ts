@@ -1,5 +1,5 @@
 import { apiFetch } from './client';
-import { Referral, ReferralStatus } from '../frontend/src/types/index';
+import { Referral, ReferralStatus } from './types';
 
 export interface CreateReferralPayload {
   originFacilityId: string;
