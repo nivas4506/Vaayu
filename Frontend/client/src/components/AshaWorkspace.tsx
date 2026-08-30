@@ -229,8 +229,8 @@ export default function AshaWorkspace({
             className="tap-target inline-flex items-center gap-1.5 rounded-xl bg-status-unavailable px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-red-700 sm:px-4"
           >
             <Siren size={15} />
-            <span className="hidden sm:inline">EMERGENCY SOS</span>
-            <span className="sm:hidden">SOS</span>
+            <span className="hidden sm:inline">{t('emergency_sos', language)}</span>
+            <span className="sm:hidden">{t('sos_btn', language)}</span>
           </button>
         )}
       </div>
@@ -253,13 +253,13 @@ export default function AshaWorkspace({
                     <span className="inline-flex items-center gap-1 rounded-full bg-mint-100 px-2.5 py-0.5 text-xs font-extrabold tracking-wide text-mint-800">
                       <Sparkles size={13} /> {t('role_asha', language)}
                     </span>
-                    <span className="text-xs text-sage-500 font-semibold">Care Coordinator Workspace</span>
+                    <span className="text-xs text-sage-500 font-semibold">{t('care_coordinator', language)}</span>
                   </div>
                   <h1 className="mt-2 text-2xl font-extrabold text-sage-900 sm:text-3xl">
                     {t('welcome_user', language)}, {ashaUser?.name || 'Sunita ASHA'}
                   </h1>
                   <p className="mt-1 text-xs text-sage-600 sm:text-sm">
-                    {t('patients_assigned_desc', language)} · {ashaUser?.district || 'Jabalpur'} District
+                    {t('patients_assigned_desc', language)} · {ashaUser?.district || 'Jabalpur'} {t('district', language)}
                   </p>
                 </div>
 
@@ -284,7 +284,7 @@ export default function AshaWorkspace({
                   <UserRound className="text-mint-600" size={20} />
                 </div>
                 <b className="mt-2 block text-2xl sm:text-3xl text-sage-900">{patients.length}</b>
-                <span className="text-xs text-sage-600">Active assigned</span>
+                <span className="text-xs text-sage-600">{t('active_assigned', language)}</span>
               </GlassCard>
 
               <GlassCard className="p-5">
@@ -295,7 +295,7 @@ export default function AshaWorkspace({
                   <ClipboardList className="text-mint-600" size={20} />
                 </div>
                 <b className="mt-2 block text-2xl sm:text-3xl text-sage-900">{pendingReferrals.length}</b>
-                <span className="text-xs text-sage-600">Awaiting visit</span>
+                <span className="text-xs text-sage-600">{t('awaiting_visit', language)}</span>
               </GlassCard>
 
               <GlassCard className="p-5">
@@ -306,7 +306,7 @@ export default function AshaWorkspace({
                   <FileHeart className="text-mint-600" size={20} />
                 </div>
                 <b className="mt-2 block text-2xl sm:text-3xl text-sage-900">{completedCheckups.length}</b>
-                <span className="text-xs text-sage-600">Logged checkups</span>
+                <span className="text-xs text-sage-600">{t('logged_checkups', language)}</span>
               </GlassCard>
 
               <GlassCard className="p-5">
@@ -317,7 +317,7 @@ export default function AshaWorkspace({
                   <Activity className="text-mint-600" size={20} />
                 </div>
                 <b className="mt-2 block text-2xl sm:text-3xl text-sage-900">{followUpRequired.length}</b>
-                <span className="text-xs text-sage-600">Require follow-up</span>
+                <span className="text-xs text-sage-600">{t('require_follow_up', language)}</span>
               </GlassCard>
             </div>
 
@@ -326,20 +326,20 @@ export default function AshaWorkspace({
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-sage-900">{t('assigned_patients', language)}</h2>
-                  <p className="text-xs text-sage-500">Only patients assigned to your demo ID are shown below</p>
+                  <p className="text-xs text-sage-500">{t('only_assigned', language)}</p>
                 </div>
                 <button
                   onClick={() => setTab('patients')}
                   className="text-xs font-bold text-mint-700 hover:underline"
                 >
-                  View full details ({patients.length}) →
+                  {t('view_full_details', language)} ({patients.length}) →
                 </button>
               </div>
 
               {patients.length === 0 ? (
                 <GlassCard className="p-6 text-center">
                   <Users className="mx-auto text-sage-400" size={36} />
-                  <p className="mt-2 text-sm font-semibold text-sage-700">No patients assigned yet.</p>
+                  <p className="mt-2 text-sm font-semibold text-sage-700">{t('no_patients_assigned', language)}</p>
                 </GlassCard>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -354,13 +354,13 @@ export default function AshaWorkspace({
                             <p className="text-xs text-sage-600 mt-0.5">{patient.mobile} · {patient.district}</p>
                           </div>
                           <span className="rounded-full bg-mint-50 px-2.5 py-0.5 text-[11px] font-bold text-mint-700 border border-mint-200">
-                            {lastRec?.status === 'follow_up' ? 'Follow-up Due' : 'Active'}
+                            {lastRec?.status === 'follow_up' ? t('follow_up_due', language) : t('status_available', language)}
                           </span>
                         </div>
 
                         <div className="mt-3 rounded-xl bg-sage-50/70 p-3 text-xs space-y-1">
                           <p className="text-sage-600">
-                            <b>Last Checkup:</b> {lastRec?.checkupDate || 'No record'}
+                            <b>{t('last_checkup_label', language)}:</b> {lastRec?.checkupDate || t('no_record', language)}
                           </p>
                           <p className="text-sage-600">
                             <b>Vitals:</b> {lastRec?.bloodPressure ? `${lastRec.bloodPressure} · ${lastRec.bloodSugar || 'Normal'}` : 'Vitals pending'}
@@ -410,10 +410,10 @@ export default function AshaWorkspace({
                 onClick={() => setTab('dashboard')}
                 className="mb-2 inline-flex items-center gap-1.5 text-xs font-bold text-sage-600 hover:text-mint-700"
               >
-                ← Back to Dashboard
+                ← {t('nav_dashboard', language)}
               </button>
               <h1 className="text-2xl font-extrabold text-sage-900">{t('nav_assigned_patients', language)}</h1>
-              <p className="text-xs text-sage-500">Review health records, record new checkups, and manage referrals</p>
+              <p className="text-xs text-sage-500">{t('historical_records', language)}</p>
             </div>
 
             {/* Patient Selector Pills */}
@@ -445,7 +445,7 @@ export default function AshaWorkspace({
                         </span>
                         <div>
                           <h2 className="text-xl font-extrabold text-sage-900">{selectedPatient.name}</h2>
-                          <p className="text-xs text-sage-500">Assigned Patient Profile</p>
+                          <p className="text-xs text-sage-500">{t('assigned_patient_profile', language)}</p>
                         </div>
                       </div>
 
@@ -459,7 +459,7 @@ export default function AshaWorkspace({
                           {selectedPatient.address}, {selectedPatient.district}
                         </span>
                         <span>
-                          <b>Language:</b> {selectedPatient.language?.toUpperCase() || 'EN'}
+                          <b>{t('language_label', language)}:</b> {selectedPatient.language?.toUpperCase() || 'EN'}
                         </span>
                       </div>
                     </div>
@@ -478,7 +478,7 @@ export default function AshaWorkspace({
                           setTab('assist');
                         }}
                       >
-                        <HeartHandshake size={16} /> Create Referral
+                        <HeartHandshake size={16} /> {t('create_referral', language)}
                       </SecondaryButton>
                     </div>
                   </div>
@@ -512,7 +512,7 @@ export default function AshaWorkspace({
                 {/* Patient's Referrals */}
                 <div className="space-y-3">
                   <h3 className="text-base font-bold text-sage-900">
-                    Referrals for {selectedPatient.name}
+                    {t('patient_referrals', language)} {selectedPatient.name}
                   </h3>
                   {referrals.filter(
                     (r) =>
@@ -520,7 +520,7 @@ export default function AshaWorkspace({
                       r.patientName.toLowerCase() === selectedPatient.name.toLowerCase()
                   ).length === 0 ? (
                     <GlassCard className="p-5 text-center">
-                      <p className="text-xs text-sage-500">No active referrals for this patient.</p>
+                      <p className="text-xs text-sage-500">{t('no_active_patient_referrals', language)}</p>
                     </GlassCard>
                   ) : (
                     <div className="space-y-2">
@@ -570,7 +570,7 @@ export default function AshaWorkspace({
                 ← Back to Dashboard
               </button>
               <h1 className="text-2xl font-extrabold text-sage-900">{t('referrals_label', language)}</h1>
-              <p className="text-xs text-sage-500">Care referrals and appointment status</p>
+              <p className="text-xs text-sage-500">{t('care_referrals_status', language)}</p>
             </div>
 
             {referrals.length === 0 ? (
@@ -594,7 +594,7 @@ export default function AshaWorkspace({
                           <span className="text-xs font-bold text-sage-800">{ref.patientName}</span>
                           <span className="text-xs text-sage-500">({ref.patientPhone})</span>
                         </div>
-                        <p className="mt-1 text-xs text-sage-600">{ref.notes || 'Care coordination request'}</p>
+                        <p className="mt-1 text-xs text-sage-600">{ref.notes || t('care_coordination', language)}</p>
                       </div>
                       <span className="rounded-full bg-sage-100 px-3 py-1 text-xs font-bold text-sage-700 self-start sm:self-auto">
                         {t(`status_${ref.status}` as any, language)}

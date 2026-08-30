@@ -133,8 +133,8 @@ export default function PatientDashboard({
             className="tap-target inline-flex items-center gap-1.5 rounded-xl bg-status-unavailable px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-red-700 sm:px-4"
           >
             <Siren size={15} />
-            <span className="hidden sm:inline">EMERGENCY SOS</span>
-            <span className="sm:hidden">SOS</span>
+            <span className="hidden sm:inline">{t('emergency_sos', language)}</span>
+            <span className="sm:hidden">{t('sos_btn', language)}</span>
           </button>
         )}
       </div>
@@ -156,7 +156,7 @@ export default function PatientDashboard({
                     <span className="inline-flex items-center gap-1 rounded-full bg-mint-100 px-2.5 py-0.5 text-xs font-extrabold tracking-wide text-mint-800">
                       <Sparkles size={13} /> {t('role_patient', language)}
                     </span>
-                    <span className="text-xs text-sage-500 font-semibold">Demo Health Portal</span>
+                    <span className="text-xs text-sage-500 font-semibold">{t('demo_health_portal', language)}</span>
                   </div>
                   <h1 className="mt-2 text-2xl font-extrabold text-sage-900 sm:text-3xl">
                     {t('welcome_user', language)}, {patient?.name || 'Patient'}
@@ -210,10 +210,10 @@ export default function PatientDashboard({
                     <Calendar size={17} className="text-mint-600" />
                   </div>
                   <b className="mt-2 block text-xl sm:text-2xl text-sage-900">
-                    {latestRecord?.checkupDate || 'None recorded'}
+                    {latestRecord?.checkupDate || t('no_record', language)}
                   </b>
                   <span className="text-xs text-sage-600">
-                    {latestRecord ? (latestRecord.facilityName || 'Primary Health Centre') : 'No checkup yet'}
+                    {latestRecord ? (latestRecord.facilityName || t('facility', language)) : t('no_record', language)}
                   </span>
                 </GlassCard>
 
@@ -225,7 +225,7 @@ export default function PatientDashboard({
                     <FileHeart size={17} className="text-mint-600" />
                   </div>
                   <b className="mt-2 block text-xl sm:text-2xl text-sage-900">{myRecords.length}</b>
-                  <span className="text-xs text-sage-600">Documented Visits</span>
+                  <span className="text-xs text-sage-600">{t('documented_visits', language)}</span>
                 </GlassCard>
 
                 <GlassCard className="p-4 sm:p-5">
@@ -237,7 +237,7 @@ export default function PatientDashboard({
                   </div>
                   <b className="mt-2 block text-xl sm:text-2xl text-sage-900">{activeReferralsCount}</b>
                   <span className="text-xs text-sage-600">
-                    {activeReferralsCount > 0 ? 'Visit in progress' : 'No active referral'}
+                    {activeReferralsCount > 0 ? t('visit_in_progress', language) : t('no_active_referral', language)}
                   </span>
                 </GlassCard>
 
@@ -250,15 +250,15 @@ export default function PatientDashboard({
                   </div>
                   <b className="mt-2 block text-base sm:text-lg text-sage-900 font-bold">
                     {latestRecord?.status === 'completed'
-                      ? 'Vitals Stable'
+                      ? t('vitals_stable', language)
                       : latestRecord?.status === 'follow_up'
-                      ? 'Follow-up Due'
+                      ? t('follow_up_due', language)
                       : latestRecord?.status === 'referred'
                       ? 'Referred'
-                      : 'Good'}
+                      : t('normal', language)}
                   </b>
                   <span className="text-xs text-sage-600">
-                    {latestRecord ? `${latestRecord.bloodPressure || '120/80'} mmHg` : 'Normal profile'}
+                    {latestRecord ? `${latestRecord.bloodPressure || '120/80'} mmHg` : t('normal_profile', language)}
                   </span>
                 </GlassCard>
               </div>
@@ -279,7 +279,7 @@ export default function PatientDashboard({
                   </div>
                   <h3 className="mt-3 text-base font-bold text-sage-900">{t('nav_find_care', language)}</h3>
                   <p className="mt-1 text-xs text-sage-600">
-                    Find clinics, HWC, PHC, or CHC with confirmed services nearby.
+                    {t('find_care_desc', language)}
                   </p>
                 </GlassCard>
               </button>
@@ -297,7 +297,7 @@ export default function PatientDashboard({
                   </div>
                   <h3 className="mt-3 text-base font-bold text-sage-900">{t('nav_health_records', language)}</h3>
                   <p className="mt-1 text-xs text-sage-600">
-                    View checkup timeline, blood pressure, blood sugar, and vitals.
+                    {t('records_desc', language)}
                   </p>
                 </GlassCard>
               </button>
@@ -315,7 +315,7 @@ export default function PatientDashboard({
                   </div>
                   <h3 className="mt-3 text-base font-bold text-sage-900">{t('nav_referrals', language)}</h3>
                   <p className="mt-1 text-xs text-sage-600">
-                    Track referral codes and checkup visit statuses in real time.
+                    {t('referrals_desc', language)}
                   </p>
                 </GlassCard>
               </button>
@@ -326,14 +326,14 @@ export default function PatientDashboard({
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-sage-900">{t('previous_health_records', language)}</h2>
-                  <p className="text-xs text-sage-500">Verified medical checkup history and vital signs</p>
+                  <p className="text-xs text-sage-500">{t('verified_history', language)}</p>
                 </div>
                 {myRecords.length > 2 && (
                   <button
                     onClick={() => setTab('records')}
                     className="text-xs font-bold text-mint-700 hover:underline"
                   >
-                    View all ({myRecords.length})
+                    {t('view_all', language)} ({myRecords.length})
                   </button>
                 )}
               </div>
@@ -342,7 +342,7 @@ export default function PatientDashboard({
                 <GlassCard className="p-6 text-center">
                   <FileHeart className="mx-auto text-sage-400" size={36} />
                   <p className="mt-2 text-sm font-semibold text-sage-700">{t('no_records_yet', language)}</p>
-                  <p className="mt-1 text-xs text-sage-500">Your ASHA health worker can log routine checkups for you.</p>
+                  <p className="mt-1 text-xs text-sage-500">{t('asha_can_log', language)}</p>
                 </GlassCard>
               ) : (
                 <div className="space-y-3">
@@ -390,10 +390,10 @@ export default function PatientDashboard({
                   onClick={() => setTab('dashboard')}
                   className="mb-2 inline-flex items-center gap-1.5 text-xs font-bold text-sage-600 hover:text-mint-700"
                 >
-                  ← Back to Dashboard
+                  ← {t('nav_dashboard', language)}
                 </button>
                 <h1 className="text-2xl font-extrabold text-sage-900">{t('previous_health_records', language)}</h1>
-                <p className="text-xs text-sage-500">Historical checkups, vitals, prescriptions, and health worker notes</p>
+                <p className="text-xs text-sage-500">{t('historical_records', language)}</p>
               </div>
             </div>
 
@@ -401,7 +401,7 @@ export default function PatientDashboard({
               <GlassCard className="p-8 text-center">
                 <FileHeart className="mx-auto text-sage-400" size={42} />
                 <p className="mt-3 text-base font-semibold text-sage-800">{t('no_records_yet', language)}</p>
-                <p className="mt-1 text-xs text-sage-500">Records will appear once an ASHA worker or clinic records a checkup.</p>
+                <p className="mt-1 text-xs text-sage-500">{t('records_appear', language)}</p>
               </GlassCard>
             ) : (
               <div className="space-y-4">
