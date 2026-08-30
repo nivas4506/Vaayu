@@ -1,10 +1,10 @@
-# 🏥 VAAYU — Decentralized & Dynamic Rural Healthcare Discovery & Referral Platform
+# VAAYU — Decentralized & Dynamic Rural Healthcare Discovery & Referral Platform
 > **Smart India Hackathon (SIH) Project**  
 > *Enabling Resilient, Offline-First Healthcare Access, Live Facility Capacity, and Intelligent Referrals for Rural India.*
 
 ---
 
-## 🌟 Executive Summary & SIH Problem Statement
+## Executive Summary & SIH Problem Statement
 
 In rural India, primary healthcare delivery faces critical bottlenecks:
 1. **Information Asymmetry**: Rural patients travel hours to Primary Health Centres (PHCs) or Community Health Centres (CHCs) only to find doctors absent, diagnostic equipment broken, or beds full.
@@ -20,7 +20,7 @@ In rural India, primary healthcare delivery faces critical bottlenecks:
 
 ---
 
-## 📐 System Architecture
+## System Architecture
 
 ### Draw.io Architecture Diagram
 The architecture is available in [`architecture-diagram.drawio`](./architecture-diagram.drawio). You can open and edit this file directly in [diagrams.net](https://app.diagrams.net/) or in VS Code with the Draw.io extension.
@@ -29,14 +29,14 @@ The architecture is available in [`architecture-diagram.drawio`](./architecture-
 
 ```mermaid
 flowchart TB
-  subgraph Stakeholders["👥 Stakeholders"]
+  subgraph Stakeholders["Stakeholders"]
     P["Citizen / Patient"]
     ASHA["ASHA Health Worker"]
     STAFF["Facility Staff (PHC/CHC)"]
     ADMIN["District Administrator"]
   end
 
-  subgraph ClientLayer["💻 Client Layer (React 19 + Vite SPA)"]
+  subgraph ClientLayer["Client Layer (React 19 + Vite SPA)"]
     HOME["Public Discovery & PIN Directory"]
     ASHA_WS["Offline ASHA Workspace + Outbox"]
     STAFF_WS["Live Bed & Service Capacity Toggles"]
@@ -44,13 +44,13 @@ flowchart TB
     SOS_UI["1-Tap Emergency SOS Dispatcher"]
   end
 
-  subgraph Gateway["🛡️ API Gateway & Security"]
+  subgraph Gateway["API Gateway & Security"]
     AUTH["Google OAuth 2.0 & RBAC Middleware"]
     IDEMP["Idempotency Key Verifier (x-idempotency-key)"]
     SYNC_PROC["Batch Offline Sync Processor"]
   end
 
-  subgraph CoreModules["⚙️ Core Backend Modules (Express + TypeScript)"]
+  subgraph CoreModules["Core Backend Modules (Express + TypeScript)"]
     DISC_MOD["Facility Discovery & Ranking"]
     REF_MOD["Referral Coordinator (REF-XXXX)"]
     SOS_MOD["Emergency SOS & Ambulance Allocator"]
@@ -59,12 +59,12 @@ flowchart TB
     DIAG_MOD["Health & Subsystem Telemetry"]
   end
 
-  subgraph DataLayer["🗄️ Persistence & Cache"]
+  subgraph DataLayer["Persistence & Cache"]
     PG[("PostgreSQL 15/18 (vaayu)\n11 Relational Tables")]
     REDIS[("Redis 7 Cache / Memory Engine\n24-hr TTL PIN Directory")]
   end
 
-  subgraph ExternalAdapters["🌐 External Integrations & Gateways"]
+  subgraph ExternalAdapters["External Integrations & Gateways"]
     MAPPLS["MapmyIndia (Mappls) Distance Matrix\n(OAuth Auto-Renewal)"]
     TWILIO["Twilio SMS & WhatsApp Gateway"]
     ABDM["ABDM / NDHM Gateway (Future/Roadmap)"]
@@ -84,7 +84,7 @@ flowchart TB
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Layer | Technologies Used |
 |---|---|
@@ -100,7 +100,7 @@ flowchart TB
 
 ---
 
-## 🎯 Role-Based Portals & Core Features
+## Role-Based Portals & Core Features
 
 ```
                ┌──────────────────────────────────────────────────────────┐
@@ -138,7 +138,7 @@ flowchart TB
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### Prerequisites
 - **Node.js**: v20+ or v22+
@@ -194,7 +194,7 @@ flowchart TB
 
 ---
 
-## ⚙️ Environment Variables Configuration (`.env`)
+## Environment Variables Configuration (`.env`)
 
 ```env
 # Server
@@ -227,7 +227,7 @@ TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
 
 ---
 
-## 📡 REST API Reference
+## REST API Reference
 
 | Endpoint | Method | Role / Auth | Description |
 |---|---|---|---|
@@ -250,7 +250,7 @@ TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 SIH/
