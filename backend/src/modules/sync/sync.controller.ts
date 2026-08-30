@@ -5,7 +5,7 @@ import { processBatchSync } from './sync.service.js';
 const syncBatchSchema = z.object({
   items: z.array(z.object({
     idempotencyKey: z.string().optional(),
-    type: z.enum(['feedback', 'referral', 'status_update']),
+    type: z.enum(['feedback', 'referral', 'status_update', 'sos', 'antenatal_checkup']),
     payload: z.any()
   }))
 });

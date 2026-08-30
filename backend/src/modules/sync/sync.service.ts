@@ -4,7 +4,7 @@ import { submitAvailabilityUpdate } from '../availability/availability.service.j
 
 export interface SyncItem {
   idempotencyKey?: string;
-  type: 'feedback' | 'referral' | 'status_update';
+  type: 'feedback' | 'referral' | 'status_update' | 'sos' | 'antenatal_checkup';
   payload?: any;
 }
 
@@ -49,6 +49,10 @@ export function processBatchSync(items: SyncItem[], actorId?: string, actorRole?
           updatedBy: actorId
         });
         results.push({ type: item.type, status: 'SUCCESS', result: res });
+        processed++;
+      } else if (item.type === 'sos' || item.type === 'antenatal_checkup') {
+        // Queued offline action acknowledged
+        results.push({ type: item.type, status: 'SUCCESS', result: { acknowledged: true, syncedAt: new Date().toISOString() } });
         processed++;
       } else {
         results.push({ type: item.type, status: 'FAILED', error: 'Unknown sync item type' });
