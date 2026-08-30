@@ -209,5 +209,11 @@ export async function seedDatabase() {
   console.log('Vaayu PostgreSQL Database seeded successfully!');
 }
 
-seedDatabase();
+// Only auto-run if executed directly as a script
+const isMainScript = process.argv[1]?.endsWith('seed.ts') || process.argv[1]?.endsWith('seed.js');
+if (isMainScript) {
+  seedDatabase().catch((err) => {
+    console.error('Seeding error:', err);
+  });
+}
 

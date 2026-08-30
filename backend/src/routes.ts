@@ -10,17 +10,14 @@ import { getAdminMetricsController, getAdminIssuesController } from './modules/a
 import { processBatchSyncController } from './modules/sync/sync.controller.js';
 import { lookupPincodeController } from './modules/pincode/pincode.controller.js';
 import { submitSosController, getSosStatusController } from './modules/sos/sos.controller.js';
+import { getHealthController, pingServiceController } from './modules/health/health.controller.js';
 
 export const apiRouter = Router();
 
-// Health Check Endpoint
-apiRouter.get('/health', (req, res) => {
-  res.json({
-    data: { status: 'UP', service: 'Vaayu API', uptime: process.uptime() },
-    meta: { timestamp: new Date().toISOString() },
-    error: null
-  });
-});
+// Comprehensive Health & Telemetry Check Endpoints
+apiRouter.get('/health', getHealthController);
+apiRouter.get('/health/ping/:service', pingServiceController);
+apiRouter.post('/health/ping/:service', pingServiceController);
 
 // Taxonomy & Facilities Endpoints (Public)
 apiRouter.get('/services', listServicesTaxonomyController);

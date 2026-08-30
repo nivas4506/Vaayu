@@ -1,5 +1,4 @@
 import pg from 'pg';
-import { newDb } from 'pg-mem';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -36,14 +35,6 @@ let memDb: any = null;
 let pgPool: any = null;
 let isInitialized = false;
 
-if (ENV.USE_PG_MEM) {
-  memDb = newDb();
-} else {
-  pgPool = new pg.Pool({
-    connectionString: ENV.DATABASE_URL,
-  });
-}
-
 function execPgMem(sql: string, method: 'none' | 'many' | 'oneOrNone', params?: any[]) {
   const fullSql = params && params.length > 0 ? interpolateParams(sql, params) : sql;
   try {
@@ -61,28 +52,115 @@ function execPgMem(sql: string, method: 'none' | 'many' | 'oneOrNone', params?: 
   }
 }
 
-export { pgPool, memDb };
+let activeDatabaseUrl = '';
+
+async function ensureDatabaseExists(databaseUrl: string) {
+  try {
+    const urlObj = new URL(databaseUrl);
+    const targetDb = urlObj.pathname.replace(/^\//, '');
+    if (!targetDb || targetDb === 'postgres') return databaseUrl;
+
+    // Connect to maintenance database 'postgres' to verify/create target DB
+    const maintenanceUrl = new URL(databaseUrl);
+    maintenanceUrl.pathname = '/postgres';
+
+    const client = new pg.Client({ connectionString: maintenanceUrl.toString() });
+    await client.connect();
+
+    // Check if target database exists (case-insensitive check)
+    const res = await client.query(
+      `SELECT datname FROM pg_database WHERE LOWER(datname) = LOWER($1)`,
+      [targetDb]
+    );
+
+    let actualDbName = targetDb;
+    if (res.rows.length === 0) {
+      console.log(`ℹ️ Database "${targetDb}" not found in PostgreSQL. Auto-creating database "${targetDb}"...`);
+      await client.query(`CREATE DATABASE "${targetDb}"`);
+      console.log(`Database "${targetDb}" created successfully!`);
+    } else {
+      actualDbName = res.rows[0].datname;
+    }
+
+    await client.end();
+
+    const finalUrl = new URL(databaseUrl);
+    finalUrl.pathname = `/${actualDbName}`;
+    activeDatabaseUrl = finalUrl.toString();
+    return activeDatabaseUrl;
+  } catch (err: any) {
+    console.warn(`[DB Setup] Automatic database verification:`, err.message || err);
+    return databaseUrl;
+  }
+}
+
+function getPgPool() {
+  if (!pgPool && !ENV.USE_PG_MEM) {
+    pgPool = new pg.Pool({
+      connectionString: activeDatabaseUrl || ENV.DATABASE_URL,
+    });
+  }
+  return pgPool;
+}
+
+let initPromise: Promise<void> | null = null;
 
 export async function initDatabase() {
   if (isInitialized) return;
-  const schemaPath = path.join(__dirname, 'schema.sql');
-  const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+  if (initPromise) return initPromise;
 
-  if (ENV.USE_PG_MEM && memDb) {
-    memDb.public.query(schemaSql);
-  } else if (pgPool) {
-    await pgPool.query(schemaSql);
-  }
-  isInitialized = true;
+  initPromise = (async () => {
+    const schemaPath = path.join(__dirname, 'schema.sql');
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+
+    if (ENV.USE_PG_MEM) {
+      if (!memDb) {
+        try {
+          const { newDb } = await import('pg-mem');
+          memDb = newDb();
+        } catch (err) {
+          console.error('Failed to load pg-mem:', err);
+        }
+      }
+      if (memDb) {
+        memDb.public.query(schemaSql);
+      }
+    } else {
+      await ensureDatabaseExists(ENV.DATABASE_URL);
+      const pool = getPgPool();
+      const statements = schemaSql
+        .split(';')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+      for (const statement of statements) {
+        try {
+          await pool.query(statement);
+        } catch (err: any) {
+          if (err.code === '23505' || err.code === '42P07' || err.message?.includes('already exists')) {
+            continue;
+          }
+          throw err;
+        }
+      }
+    }
+    isInitialized = true;
+  })();
+
+  return initPromise;
 }
+
+export { pgPool, memDb };
 
 // Universal Database Client for PostgreSQL & In-Memory Postgres
 export const db = {
   async exec(sql: string) {
+    await initDatabase();
     if (ENV.USE_PG_MEM && memDb) {
       memDb.public.query(sql);
-    } else if (pgPool) {
-      await pgPool.query(sql);
+    } else {
+      const pool = getPgPool();
+      await pool.query(sql);
     }
   },
 
@@ -94,32 +172,38 @@ export const db = {
         if (ENV.USE_PG_MEM && memDb) {
           const res = execPgMem(pgSql, 'many', bindParams);
           return res || [];
-        } else if (pgPool) {
+        } else {
+          const pool = getPgPool();
           let res: any[] = [];
-          pgPool.query(pgSql, bindParams).then((r: any) => { res = r.rows; }).catch((e: any) => console.error(e));
+          if (pool) {
+            pool.query(pgSql, bindParams).then((r: any) => { res = r.rows; }).catch((e: any) => console.error(e));
+          }
           return res;
         }
-        return [];
       },
 
       get(...params: any[]): any | undefined {
         const bindParams = params.length === 1 && Array.isArray(params[0]) ? params[0] : params;
         if (ENV.USE_PG_MEM && memDb) {
           return execPgMem(pgSql, 'oneOrNone', bindParams);
-        } else if (pgPool) {
+        } else {
+          const pool = getPgPool();
           let res: any = undefined;
-          pgPool.query(pgSql, bindParams).then((r: any) => { res = r.rows[0]; }).catch((e: any) => console.error(e));
+          if (pool) {
+            pool.query(pgSql, bindParams).then((r: any) => { res = r.rows[0]; }).catch((e: any) => console.error(e));
+          }
           return res;
         }
-        return undefined;
       },
 
       async run(...params: any[]) {
+        await initDatabase();
         const bindParams = params.length === 1 && Array.isArray(params[0]) ? params[0] : params;
         if (ENV.USE_PG_MEM && memDb) {
           execPgMem(pgSql, 'none', bindParams);
-        } else if (pgPool) {
-          await pgPool.query(pgSql, bindParams);
+        } else {
+          const pool = getPgPool();
+          await pool.query(pgSql, bindParams);
         }
         return { changes: 1 };
       }
@@ -137,19 +221,17 @@ export const db = {
           memDb.public.query('ROLLBACK;');
           throw err;
         }
-      } else if (pgPool) {
-        pgPool.query('BEGIN;');
+      } else {
+        const pool = getPgPool();
+        pool.query('BEGIN;');
         try {
           fn();
-          pgPool.query('COMMIT;');
+          pool.query('COMMIT;');
         } catch (err) {
-          pgPool.query('ROLLBACK;');
+          pool.query('ROLLBACK;');
           throw err;
         }
       }
     };
   }
 };
-
-// Initialize database schema on load
-initDatabase();

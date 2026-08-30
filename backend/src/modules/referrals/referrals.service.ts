@@ -1,4 +1,5 @@
 import { db } from '../../db/client.js';
+import { sendSMS, sendWhatsApp } from '../notifications/twilio.service.js';
 
 export function generatePublicCode(): string {
   const num = Math.floor(1000 + Math.random() * 9000);
@@ -49,6 +50,17 @@ export function createReferral(data: {
     INSERT INTO referral_events (id, referral_id, from_status, to_status, actor_id, reason, created_at)
     VALUES (?, ?, NULL, 'CREATED', ?, 'Referral created', ?)
   `).run(`evt_${Date.now()}`, id, data.actorId || 'anon_asha', now);
+
+  // Dispatch SMS notification to patient if phone number provided
+  if (data.patientPhone) {
+    const message = `🏥 [VAAYU HEALTH REFERRAL]
+Dear ${data.patientName}, your referral ticket ${code} has been created.
+Service: ${data.serviceId}
+Urgency: ${data.urgency}
+Status: CREATED. Present this code at destination facility.`;
+    sendSMS(data.patientPhone, message).catch((e) => console.warn('[Referral SMS Notification Error]', e));
+    sendWhatsApp(data.patientPhone, message).catch((e) => console.warn('[Referral WhatsApp Notification Error]', e));
+  }
 
   return getReferralByCode(code);
 }
@@ -110,6 +122,14 @@ export function updateReferralStatus(
     INSERT INTO referral_events (id, referral_id, from_status, to_status, actor_id, reason, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(`evt_${Date.now()}`, ref.id, ref.status, newStatus, data?.actorId || 'staff', data?.reason || null, now);
+
+  // Dispatch status update notification
+  if (ref.patient_phone) {
+    const updateMsg = `🏥 [VAAYU REFERRAL UPDATE]
+Ticket: ${ref.public_code}
+Status updated to: ${newStatus}.${data?.reason ? ` Reason: ${data.reason}` : ''}`;
+    sendSMS(ref.patient_phone, updateMsg).catch((e) => console.warn('[Referral Update SMS Error]', e));
+  }
 
   return getReferralByCode(ref.public_code);
 }

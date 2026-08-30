@@ -15,13 +15,51 @@ export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lo
   return Math.round(R * c * 10) / 10;
 }
 
+let cachedMapplsToken = '';
+let tokenExpiryTime = 0;
+
+async function getMapplsAccessToken(): Promise<string> {
+  if (cachedMapplsToken && Date.now() < tokenExpiryTime - 60000) {
+    return cachedMapplsToken;
+  }
+
+  if (ENV.MAPPLS_CLIENT_ID && ENV.MAPPLS_CLIENT_SECRET) {
+    try {
+      const params = new URLSearchParams();
+      params.append('grant_type', 'client_credentials');
+      params.append('client_id', ENV.MAPPLS_CLIENT_ID);
+      params.append('client_secret', ENV.MAPPLS_CLIENT_SECRET);
+
+      const res = await fetch('https://outpost.mappls.com/api/security/oauth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as any;
+        if (data.access_token) {
+          cachedMapplsToken = data.access_token;
+          tokenExpiryTime = Date.now() + (data.expires_in || 86400) * 1000;
+          return cachedMapplsToken;
+        }
+      }
+    } catch (err: any) {
+      console.warn('[Discovery Service] Mappls OAuth Token exchange note:', err.message || err);
+    }
+  }
+
+  return ENV.MAPPLS_ACCESS_TOKEN || ENV.MAPPLS_CLIENT_ID || '';
+}
+
 async function fetchMapplsDistances(
   userLat: number,
   userLng: number,
   facilities: { id: string; latitude: number; longitude: number }[]
-): Promise<Record<string, number>> {
-  if (!ENV.MAPPLS_ACCESS_TOKEN || facilities.length === 0) {
-    return {};
+): Promise<{ distances: Record<string, number>; durations: Record<string, number> }> {
+  const result = { distances: {} as Record<string, number>, durations: {} as Record<string, number> };
+  if ((!ENV.MAPPLS_ACCESS_TOKEN && !ENV.MAPPLS_CLIENT_ID) || facilities.length === 0) {
+    return result;
   }
 
   try {
@@ -29,11 +67,20 @@ async function fetchMapplsDistances(
     const destCoords = facilities.map(f => `${f.longitude},${f.latitude}`).join(';');
     const coordsString = `${sourceCoord};${destCoords}`;
 
-    const url = `https://route.mappls.com/route/dm/distance_matrix/driving/${coordsString}?access_token=${ENV.MAPPLS_ACCESS_TOKEN}`;
+    // First attempt: MapmyIndia Advanced Maps REST endpoint with Client ID
+    const apiKey = (ENV.MAPPLS_CLIENT_ID || ENV.MAPPLS_ACCESS_TOKEN).trim();
+    let url = `https://apis.mappls.com/advancedmaps/v1/${encodeURIComponent(apiKey)}/distance_matrix/driving/${coordsString}`;
 
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(4000) // 4 seconds timeout
-    });
+    let response = await fetch(url, { signal: AbortSignal.timeout(4000) });
+
+    // Fallback: If 401, obtain OAuth Bearer token and call route.mappls.com
+    if (!response.ok) {
+      const oauthToken = await getMapplsAccessToken();
+      if (oauthToken) {
+        url = `https://route.mappls.com/route/dm/distance_matrix/driving/${coordsString}?access_token=${encodeURIComponent(oauthToken)}`;
+        response = await fetch(url, { signal: AbortSignal.timeout(4000) });
+      }
+    }
 
     if (!response.ok) {
       throw new Error(`Mappls responded with status ${response.status}`);
@@ -41,22 +88,39 @@ async function fetchMapplsDistances(
 
     const data = await response.json() as any;
 
-    if (data && data.results && data.results[0] && Array.isArray(data.results[0].distances)) {
-      const distances = data.results[0].distances;
-      const distanceMap: Record<string, number> = {};
+    if (data && data.results) {
+      const rawDistances = Array.isArray(data.results.distances?.[0])
+        ? data.results.distances[0]
+        : Array.isArray(data.results[0]?.distances)
+        ? data.results[0].distances
+        : null;
 
-      facilities.forEach((fac, idx) => {
-        const distMeters = distances[idx + 1];
-        if (typeof distMeters === 'number') {
-          distanceMap[fac.id] = Math.round((distMeters / 1000) * 10) / 10;
-        }
-      });
-      return distanceMap;
+      const rawDurations = Array.isArray(data.results.durations?.[0])
+        ? data.results.durations[0]
+        : Array.isArray(data.results[0]?.durations)
+        ? data.results[0].durations
+        : null;
+
+      if (rawDistances) {
+        facilities.forEach((fac, idx) => {
+          const distMeters = rawDistances[idx + 1];
+          if (typeof distMeters === 'number') {
+            result.distances[fac.id] = Math.round((distMeters / 1000) * 10) / 10;
+          }
+          if (rawDurations) {
+            const durSeconds = rawDurations[idx + 1];
+            if (typeof durSeconds === 'number') {
+              result.durations[fac.id] = Math.max(1, Math.round(durSeconds / 60));
+            }
+          }
+        });
+        return result;
+      }
     }
-  } catch (err) {
-    console.warn('[Discovery Service] Mappls API failed or timed out, falling back to Haversine straight-line distance calculations.', err);
+  } catch (err: any) {
+    console.warn('[Discovery Service] Mappls API call notice:', err.message || err);
   }
-  return {};
+  return result;
 }
 
 export async function discoverFacilities(params: {
@@ -79,7 +143,7 @@ export async function discoverFacilities(params: {
   const facilities = db.prepare(`SELECT * FROM facilities WHERE status = 'ACTIVE'`).all() as any[];
 
   // Retrieve driving distances via Mappls Distance Matrix API, fallback to Haversine straight-line if offline or error
-  const mapplsDistances = await fetchMapplsDistances(userLat, userLng, facilities);
+  const { distances: mapplsDistances, durations: mapplsDurations } = await fetchMapplsDistances(userLat, userLng, facilities);
 
   let serviceGapDetected = false;
   let gapDetails: any = null;
@@ -94,6 +158,7 @@ export async function discoverFacilities(params: {
     `).get(fac.id, need) as any;
 
     const distanceKm = mapplsDistances[fac.id] ?? calculateDistanceKm(userLat, userLng, fac.latitude, fac.longitude);
+    const estimatedTravelTimeMin = mapplsDurations[fac.id] ?? Math.max(1, Math.round((distanceKm / 35) * 60));
 
     // Scoring metrics
     const serviceMatchScore = avail ? 1.0 : 0.0;
@@ -129,7 +194,7 @@ export async function discoverFacilities(params: {
     ) * 100) / 100;
 
     // Explanation string
-    let explanation = `${fac.type} located ${distanceKm} km away.`;
+    let explanation = `${fac.type} located ${distanceKm} km away (~${estimatedTravelTimeMin} mins).`;
     if (avail?.status === 'AVAILABLE') {
       explanation += ` Confirmed AVAILABLE for ${need}.`;
     } else if (avail?.status === 'UNAVAILABLE') {
@@ -147,6 +212,7 @@ export async function discoverFacilities(params: {
       pincode: fac.pincode,
       village: fac.village,
       distanceKm,
+      estimatedTravelTimeMin,
       hours: fac.hours,
       contact: fac.contact,
       serviceAvailability: avail ? {

@@ -9,9 +9,14 @@ export interface AuthenticatedRequest extends Request {
 
 export function rbac(allowedRoles: UserRole[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const roleHeader = (req.headers['x-user-role'] as string)?.toUpperCase();
-    const userRole: UserRole = (['PATIENT', 'ASHA', 'FACILITY_STAFF', 'ADMIN'].includes(roleHeader)
-      ? roleHeader
+    let rawRole = ((req.headers['x-user-role'] as string) || '').toUpperCase().trim();
+    
+    // Normalize role synonyms
+    if (rawRole === 'STAFF') rawRole = 'FACILITY_STAFF';
+    if (rawRole === 'DISTRICT_ADMIN') rawRole = 'ADMIN';
+
+    const userRole: UserRole = (['PATIENT', 'ASHA', 'FACILITY_STAFF', 'ADMIN'].includes(rawRole)
+      ? rawRole
       : 'PATIENT') as UserRole;
 
     req.userRole = userRole;

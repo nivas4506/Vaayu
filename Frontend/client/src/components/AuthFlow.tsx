@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { CheckCircle2, LockKeyhole, ShieldCheck, UserPlus } from 'lucide-react';
 import { useAppStore } from '../store';
 import { verifyDemoOtp } from '../services/otpService';
@@ -6,22 +6,98 @@ import { UserLanguage, UserRole } from '../types';
 import { t } from '../i18n';
 import { GlassCard, PrimaryButton, SecondaryButton, SectionHeading } from './ui';
 
+const GOOGLE_CLIENT_ID = '281442205792-qud09vjpv5jqmosl350s4oolbksha5gs.apps.googleusercontent.com';
+
 type Step = 'login' | 'register' | 'otp' | 'pending';
 const field = 'mt-1.5 w-full rounded-xl border border-sage-200 bg-white/85 px-3.5 py-3 text-sage-900 shadow-sm transition focus:border-mint-600 focus:outline-none focus:ring-4 focus:ring-mint-100';
 
+function parseJwt(token: string) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error('Failed to parse Google JWT', e);
+    return null;
+  }
+}
+
 export default function AuthFlow({ onDone }: { onDone: () => void }) {
-  const { registerDemoUser, signIn, language, setLanguage } = useAppStore(s => ({
-    registerDemoUser: s.registerDemoUser, signIn: s.signIn, language: s.language, setLanguage: s.setLanguage
+  const { registerDemoUser, signIn, signInWithGoogle, language, setLanguage } = useAppStore(s => ({
+    registerDemoUser: s.registerDemoUser,
+    signIn: s.signIn,
+    signInWithGoogle: s.signInWithGoogle,
+    language: s.language,
+    setLanguage: s.setLanguage
   }));
   const [step, setStep] = useState<Step>('login');
   const [error, setError] = useState('');
   const [pendingId, setPendingId] = useState('');
   const [login, setLogin] = useState({ email: '', password: '' });
+  const [oauthRole, setOauthRole] = useState<UserRole>('patient');
   const [form, setForm] = useState({
-    name: '', mobile: '', email: '', password: '', confirm: '', role: 'patient' as UserRole, state: 'Maharashtra', district: '', address: '', emergencyContact: ''
+    name: '', mobile: '', email: '', password: '', confirm: '', role: 'patient' as UserRole, state: 'Madhya Pradesh', district: 'Jabalpur', address: '', emergencyContact: ''
   });
 
   const set = (key: keyof typeof form, value: string) => setForm(s => ({ ...s, [key]: value }));
+
+  // Initialize Google Identity Services OAuth 2.0
+  useEffect(() => {
+    const handleCredentialResponse = (response: any) => {
+      if (response?.credential) {
+        const payload = parseJwt(response.credential);
+        if (payload?.email) {
+          const result = signInWithGoogle({
+            name: payload.name || payload.given_name || 'Google User',
+            email: payload.email,
+            googleId: payload.sub,
+            picture: payload.picture,
+            role: oauthRole,
+          });
+          if (result.error) {
+            setError(result.error);
+            if (result.user?.status === 'pending') setStep('pending');
+            return;
+          }
+          onDone();
+        }
+      }
+    };
+
+    const initGsi = () => {
+      if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
+        (window as any).google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        const btnContainer = document.getElementById('googleSignInBtn');
+        if (btnContainer) {
+          btnContainer.innerHTML = '';
+          (window as any).google.accounts.id.renderButton(btnContainer, {
+            theme: 'outline',
+            size: 'large',
+            type: 'standard',
+            shape: 'pill',
+            text: step === 'register' ? 'signup_with' : 'signin_with',
+            width: 320,
+          });
+        }
+      }
+    };
+
+    initGsi();
+    const timer = setTimeout(initGsi, 500);
+    return () => clearTimeout(timer);
+  }, [step, oauthRole, onDone, signInWithGoogle]);
 
   const signInNow = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -74,6 +150,16 @@ export default function AuthFlow({ onDone }: { onDone: () => void }) {
 
           {step === 'login' && (
             <GlassCard strong className="p-5 sm:p-7">
+              {/* Google OAuth 2.0 Button */}
+              <div className="flex flex-col items-center justify-center space-y-3 pb-5">
+                <div id="googleSignInBtn" className="flex min-h-[44px] justify-center" />
+                <div className="flex w-full items-center gap-3 pt-2">
+                  <div className="h-px flex-1 bg-sage-200" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-sage-400">or sign in with email</span>
+                  <div className="h-px flex-1 bg-sage-200" />
+                </div>
+              </div>
+
               <form onSubmit={signInNow} className="space-y-4">
                 <label className="block text-sm font-bold text-sage-800">
                   {t('email_address', language)}
@@ -96,6 +182,27 @@ export default function AuthFlow({ onDone }: { onDone: () => void }) {
 
           {step === 'register' && (
             <GlassCard strong className="p-5 sm:p-7">
+              {/* Google OAuth 2.0 Register Option */}
+              <div className="flex flex-col items-center justify-center space-y-3 pb-5">
+                <div className="flex items-center gap-2 text-xs font-semibold text-sage-600">
+                  <span>Sign up as:</span>
+                  <select
+                    className="rounded-lg border border-sage-300 bg-white px-2 py-1 text-xs font-bold text-sage-800"
+                    value={oauthRole}
+                    onChange={e => setOauthRole(e.target.value as UserRole)}
+                  >
+                    <option value="patient">Citizen / Patient</option>
+                    <option value="asha">ASHA Worker</option>
+                  </select>
+                </div>
+                <div id="googleSignInBtn" className="flex min-h-[44px] justify-center" />
+                <div className="flex w-full items-center gap-3 pt-2">
+                  <div className="h-px flex-1 bg-sage-200" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-sage-400">or register with details</span>
+                  <div className="h-px flex-1 bg-sage-200" />
+                </div>
+              </div>
+
               <form onSubmit={register} className="grid gap-3 sm:grid-cols-2">
                 <label className="text-sm font-bold">
                   {t('full_name', language)}
@@ -152,6 +259,9 @@ export default function AuthFlow({ onDone }: { onDone: () => void }) {
                 <PrimaryButton className="sm:col-span-2" type="submit">
                   <UserPlus size={18} /> {t('next', language)}
                 </PrimaryButton>
+                <button type="button" className="sm:col-span-2 py-2 text-sm font-bold text-mint-700 underline underline-offset-4" onClick={() => { setError(''); setStep('login'); }}>
+                  Already have an account? Sign in
+                </button>
               </form>
             </GlassCard>
           )}

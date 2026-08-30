@@ -1,0 +1,117 @@
+<mxfile host="app.diagrams.net" modified="2026-08-30T09:15:00.000Z" agent="Mozilla/5.0" version="21.6.8" type="device">
+  <diagram id="vaayu-sih-architecture" name="VAAYU System Architecture">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- User Actors Layer -->
+        <mxCell id="u1" value="Patient / Citizen" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="100" y="40" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u2" value="ASHA Worker" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="320" y="40" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u3" value="Facility Staff (PHC/CHC)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="580" y="40" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u4" value="District Administrator" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="840" y="40" width="30" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Presentation / Frontend Layer -->
+        <mxCell id="grp_fe" value="Presentation &amp; Client Layer (React 19 + Vite SPA / PWA)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontStyle=1;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="60" y="140" width="880" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="fe1" value="Public Healthcare Discovery&amp; PIN Directory" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#008080;fontStyle=1;" vertex="1" parent="grp_fe">
+          <mxGeometry x="20" y="40" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fe2" value="ASHA Offline Workspace&amp; Outbox Sync (IndexedDB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2E8B57;fontStyle=1;" vertex="1" parent="grp_fe">
+          <mxGeometry x="230" y="40" width="190" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fe3" value="Facility Bed &amp; Service Availability Controller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#FF8C00;fontStyle=1;" vertex="1" parent="grp_fe">
+          <mxGeometry x="450" y="40" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fe4" value="District Real-Time Telemetry &amp; Bottleneck Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#B22222;fontStyle=1;" vertex="1" parent="grp_fe">
+          <mxGeometry x="660" y="40" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- API Gateway / Middleware Layer -->
+        <mxCell id="grp_gw" value="API Gateway &amp; Middleware (Express + Node.js)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="300" width="880" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="gw1" value="RBAC Security &amp; Auth (Google OAuth 2.0 / Local)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="grp_gw">
+          <mxGeometry x="20" y="30" width="260" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="gw2" value="Idempotency Key Verifier" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="grp_gw">
+          <mxGeometry x="310" y="30" width="240" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="gw3" value="Batch Offline Sync Processor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="grp_gw">
+          <mxGeometry x="580" y="30" width="280" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Core Business Micro-Modules -->
+        <mxCell id="grp_be" value="Backend Service Engine (Modular Micro-Modules)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="420" width="880" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="be1" value="Facility Discovery &amp; Ranking Engine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="grp_be">
+          <mxGeometry x="20" y="40" width="150" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="be2" value="Referral Coordinator &amp; Timeline (REF-XXXX)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="grp_be">
+          <mxGeometry x="190" y="40" width="160" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="be3" value="Emergency SOS &amp; Nearest Ambulance Assign" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="grp_be">
+          <mxGeometry x="370" y="40" width="160" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="be4" value="Dynamic Capacity &amp; Freshness Monitor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="grp_be">
+          <mxGeometry x="550" y="40" width="150" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="be5" value="District Telemetry &amp; Issue Detection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="grp_be">
+          <mxGeometry x="720" y="40" width="140" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="be6" value="India Post 19,000+ PIN Directory" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="grp_be">
+          <mxGeometry x="20" y="95" width="200" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="be7" value="Haversine Road Tortuosity Calculator" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="grp_be">
+          <mxGeometry x="240" y="95" width="200" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="be8" value="Crowdsourced Feedback &amp; Discrepancy Moderation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="grp_be">
+          <mxGeometry x="460" y="95" width="240" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="be9" value="System Health &amp; Ping Telemetry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="grp_be">
+          <mxGeometry x="720" y="95" width="140" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Data & External Adapters Layer -->
+        <mxCell id="grp_data" value="Data Layer &amp; External Integrations" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="610" width="880" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" value="PostgreSQL 15/18 (vaayu)&lt;br&gt;11 Relational Tables" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="grp_data">
+          <mxGeometry x="20" y="35" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" value="Redis 7 Cache / Memory Engine&lt;br&gt;24-hr TTL PIN Directory" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="grp_data">
+          <mxGeometry x="190" y="35" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ext1" value="MapmyIndia (Mappls)&lt;br&gt;Distance Matrix &amp; OAuth" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ea580c;fontStyle=1;" vertex="1" parent="grp_data">
+          <mxGeometry x="370" y="45" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ext2" value="Twilio Gateway&lt;br&gt;SMS &amp; WhatsApp Alerts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ea580c;fontStyle=1;" vertex="1" parent="grp_data">
+          <mxGeometry x="530" y="45" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ext3" value="ABDM / NDHM (Future)&lt;br&gt;ABHA &amp; HFR Registry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ea580c;fontStyle=1;" vertex="1" parent="grp_data">
+          <mxGeometry x="700" y="45" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Connections -->
+        <mxCell id="c1" edge="1" parent="1" source="u1" target="fe1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c2" edge="1" parent="1" source="u2" target="fe2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c3" edge="1" parent="1" source="u3" target="fe3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c4" edge="1" parent="1" source="u4" target="fe4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c5" edge="1" parent="1" source="grp_fe" target="grp_gw"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c6" edge="1" parent="1" source="grp_gw" target="grp_be"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="c7" edge="1" parent="1" source="grp_be" target="grp_data"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

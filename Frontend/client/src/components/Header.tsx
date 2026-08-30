@@ -112,15 +112,11 @@ export default function Header({
     <header className="sticky top-2 sm:top-3 z-40 mx-auto flex w-[calc(100%-16px)] sm:w-[calc(100%-32px)] max-w-7xl min-h-[58px] items-center justify-between gap-2 sm:gap-4 rounded-2xl sm:rounded-3xl px-3 py-2 sm:px-5 glass-strong shadow-glass transition-all duration-300">
       {/* Brand / Logo */}
       <button
+        type="button"
         className="flex shrink-0 items-center gap-2.5 sm:gap-3 text-left focus:outline-none"
         aria-label="Go to VAAYU"
         onClick={() => {
-          if (authenticated) {
-            onNavigate('workspace');
-            onTabChange?.('dashboard');
-          } else {
-            onNavigate('landing');
-          }
+          onNavigate('landing');
           setOpen(false);
         }}
       >

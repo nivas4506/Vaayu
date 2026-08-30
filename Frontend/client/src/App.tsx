@@ -92,25 +92,29 @@ function FloatingAgentChat() {
 }
 
 export default function App() {
-  const { language, session, isOffline, pendingSync, signOut } = useAppStore((s) => ({
+  const { language, session, isOffline, pendingSync, signOut, loadFromBackend } = useAppStore((s) => ({
     language: s.language,
     session: s.session,
     isOffline: s.isOffline,
     pendingSync: s.pendingSync,
     signOut: s.signOut,
+    loadFromBackend: s.loadFromBackend,
   }));
 
-  // Direct authenticated users immediately to workspace
-  const [screen, setScreen] = useState<Screen>(() => (session ? 'workspace' : 'landing'));
+  // Initial sync with backend API on mount
+  useEffect(() => {
+    loadFromBackend();
+  }, [loadFromBackend]);
+
+  // Default to landing homepage
+  const [screen, setScreen] = useState<Screen>('landing');
   const [workspaceTab, setWorkspaceTab] = useState<string>('dashboard');
   const [toast, setToast] = useState(false);
 
   const go = (next: Screen) => {
-    // If authenticated user attempts to go to landing, keep them on their role dashboard
-    const target = session && next === 'landing' ? 'workspace' : next;
-    if (target !== screen) {
-      window.history.pushState({ vaayuScreen: target }, '');
-      setScreen(target);
+    if (next !== screen) {
+      window.history.pushState({ vaayuScreen: next }, '');
+      setScreen(next);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -118,16 +122,12 @@ export default function App() {
   useEffect(() => {
     const restore = (event: PopStateEvent) => {
       const stateScreen = event.state?.vaayuScreen as Screen;
-      if (session && stateScreen === 'landing') {
-        setScreen('workspace');
-      } else {
-        setScreen(stateScreen || (session ? 'workspace' : 'landing'));
-      }
+      setScreen(stateScreen || 'landing');
     };
     window.history.replaceState({ vaayuScreen: screen }, '');
     window.addEventListener('popstate', restore);
     return () => window.removeEventListener('popstate', restore);
-  }, [screen, session]);
+  }, [screen]);
 
   useEffect(() => {
     if (isOffline && pendingSync.length) {
@@ -165,9 +165,9 @@ export default function App() {
       />
 
       <AnimatePresence mode="wait">
-        {screen === 'landing' && !session && (
+        {screen === 'landing' && (
           <motion.div key="landing" {...pageTransition}>
-            <Landing onStart={() => go('auth')} />
+            <Landing onStart={() => go(session ? 'workspace' : 'auth')} />
           </motion.div>
         )}
 
