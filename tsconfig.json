@@ -13,6 +13,15 @@
     "resolveJsonModule": true,
     "declaration": true
   },
-  "include": ["backend/src/**/*", "api/**/*"],
+  "include": [
+    "backend/src/app.ts",
+    "backend/src/server.ts",
+    "backend/src/routes.ts",
+    "backend/src/config/**/*",
+    "backend/src/db/**/*",
+    "backend/src/middleware/**/*",
+    "backend/src/modules/**/*",
+    "api/v1/**/*"
+  ],
   "exclude": ["node_modules", "dist", "Frontend", "tests"]
 }
