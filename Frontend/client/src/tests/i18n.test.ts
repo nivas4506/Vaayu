@@ -14,4 +14,10 @@ describe('i18n Localization', () => {
     expect(SUPPORTED_LANGUAGES).toHaveLength(12);
     expect(SUPPORTED_LANGUAGES.map((language) => language.code)).toContain('ta');
   });
+  test('keeps authenticated navigation translated after login', () => {
+    for (const language of SUPPORTED_LANGUAGES.filter((item) => item.code !== 'en')) {
+      expect(t('nav_dashboard', language.code)).not.toBe('Dashboard');
+      expect(t('health_overview', language.code)).not.toBe('Health Overview');
+    }
+  });
 });
