@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { CheckCircle2, LockKeyhole, ShieldCheck, UserPlus } from 'lucide-react';
 import { useAppStore } from '../store';
-import { verifyDemoOtp } from '../services/otpService';
+import { verifyDemoOtp, requestOtpApi, verifyOtpApi } from '../services/otpService';
 import { UserLanguage, UserRole } from '../types';
 import { t } from '../i18n';
 import { GlassCard, PrimaryButton, SecondaryButton, SectionHeading } from './ui';
@@ -110,20 +110,46 @@ export default function AuthFlow({ onDone }: { onDone: () => void }) {
     onDone();
   };
 
-  const register = (event: FormEvent<HTMLFormElement>) => {
+  const [otpInfo, setOtpInfo] = useState<{ message?: string; demoOtp?: string; isSending?: boolean }>({});
+
+  const register = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (form.password !== form.confirm) return setError('Passwords do not match.');
     if (!form.name || !form.mobile || !form.email || !form.password) return setError('Please complete the required fields.');
+    
+    setError('');
+    setOtpInfo({ isSending: true });
+    
     const user = registerDemoUser({ ...form, language });
     setPendingId(user.id);
-    setError('');
     setStep('otp');
+
+    try {
+      const res = await requestOtpApi(form.mobile);
+      setOtpInfo({
+        message: res.message,
+        demoOtp: res.demoOtp,
+        isSending: false,
+      });
+    } catch (err: any) {
+      setOtpInfo({
+        message: 'Demo mode active: Enter code 482910 or 123456',
+        demoOtp: '482910',
+        isSending: false,
+      });
+    }
   };
 
-  const confirm = (event: FormEvent<HTMLFormElement>) => {
+  const confirm = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const otp = new FormData(event.currentTarget).get('otp')?.toString() || '';
-    if (!verifyDemoOtp(otp)) return setError('Enter the six-digit verification code.');
+    if (!otp || otp.trim().length !== 6) return setError('Enter a valid 6-digit verification code.');
+
+    const verification = await verifyOtpApi(form.mobile, otp);
+    if (!verification.valid) {
+      return setError(verification.message || 'Invalid verification code. Please try again.');
+    }
+
     const account = useAppStore.getState().users.find(item => item.id === pendingId);
     if (account?.role === 'asha') {
       setStep('pending');
@@ -272,16 +298,63 @@ export default function AuthFlow({ onDone }: { onDone: () => void }) {
                 <ShieldCheck size={24} />
               </span>
               <h3 className="mt-5 text-xl font-extrabold text-sage-900">{t('confirm_contact_details', language)}</h3>
-              <p className="mt-2 text-sm leading-6 text-sage-600">{t('enter_otp_desc', language)}</p>
+              <p className="mt-2 text-sm leading-6 text-sage-600">
+                {t('enter_otp_desc', language)} <span className="font-bold text-sage-900">{form.mobile}</span>
+              </p>
+
+              {otpInfo.message && (
+                <div className={`mt-4 rounded-xl p-3.5 text-xs font-semibold ${otpInfo.demoOtp ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'bg-mint-50 text-mint-900 border border-mint-200'}`}>
+                  <p>{otpInfo.message}</p>
+                  {otpInfo.demoOtp && (
+                    <p className="mt-1 font-mono font-bold text-sm text-amber-700">
+                      Code: {otpInfo.demoOtp} <span className="text-[11px] font-normal text-amber-600">(Use this code or check SMS)</span>
+                    </p>
+                  )}
+                </div>
+              )}
+
               <form onSubmit={confirm} className="mt-6 space-y-4">
                 <label className="block text-sm font-bold">
                   {t('verification_code', language)}
-                  <input required className={field} name="otp" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" />
+                  <input
+                    required
+                    defaultValue={otpInfo.demoOtp || ''}
+                    className={field}
+                    name="otp"
+                    inputMode="numeric"
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    autoComplete="one-time-code"
+                    placeholder="Enter 6-digit code"
+                  />
                 </label>
                 {error && <p className="text-sm font-bold text-status-unavailable">{error}</p>}
                 <PrimaryButton className="w-full" type="submit">
                   <CheckCircle2 size={18} /> {t('verify_account_btn', language)}
                 </PrimaryButton>
+
+                <div className="flex items-center justify-between pt-2 text-xs">
+                  <button
+                    type="button"
+                    className="font-bold text-sage-500 hover:text-sage-700"
+                    onClick={() => { setError(''); setStep('register'); }}
+                  >
+                    ← Change Mobile Number
+                  </button>
+                  <button
+                    type="button"
+                    disabled={otpInfo.isSending}
+                    className="font-bold text-mint-700 hover:underline disabled:opacity-50"
+                    onClick={async () => {
+                      setOtpInfo({ isSending: true });
+                      setError('');
+                      const res = await requestOtpApi(form.mobile);
+                      setOtpInfo({ message: res.message, demoOtp: res.demoOtp, isSending: false });
+                    }}
+                  >
+                    {otpInfo.isSending ? 'Sending...' : 'Resend OTP via SMS'}
+                  </button>
+                </div>
               </form>
             </GlassCard>
           )}

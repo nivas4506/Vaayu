@@ -8,11 +8,15 @@ try {
   // Safe fallback if .env is missing
 }
 
+const databaseUrl = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/vaayu';
+const isVercelWithoutRemoteDatabase =
+  process.env.VERCEL === '1' && (!process.env.DATABASE_URL || /@(localhost|127\.0\.0\.1)(:|\/)/.test(databaseUrl));
+
 export const ENV = {
   PORT: process.env.PORT || 3000,
   NODE_ENV: process.env.NODE_ENV || 'development',
-  DATABASE_URL: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/vaayu',
-  USE_PG_MEM: process.env.USE_PG_MEM === 'true' || process.env.NODE_ENV === 'test',
+  DATABASE_URL: databaseUrl,
+  USE_PG_MEM: process.env.USE_PG_MEM === 'true' || process.env.NODE_ENV === 'test' || isVercelWithoutRemoteDatabase,
   FRESHNESS_WINDOW_HOURS: 48,
   REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6379',
   USE_REDIS: process.env.USE_REDIS === 'true',

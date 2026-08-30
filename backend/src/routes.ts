@@ -11,8 +11,13 @@ import { processBatchSyncController } from './modules/sync/sync.controller.js';
 import { lookupPincodeController } from './modules/pincode/pincode.controller.js';
 import { submitSosController, getSosStatusController } from './modules/sos/sos.controller.js';
 import { getHealthController, pingServiceController } from './modules/health/health.controller.js';
+import { sendOtpController, verifyOtpController } from './modules/auth/auth.controller.js';
 
 export const apiRouter = Router();
+
+// Authentication & OTP Endpoints (Public)
+apiRouter.post('/auth/send-otp', sendOtpController);
+apiRouter.post('/auth/verify-otp', verifyOtpController);
 
 // Comprehensive Health & Telemetry Check Endpoints
 apiRouter.get('/health', getHealthController);

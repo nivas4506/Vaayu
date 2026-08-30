@@ -7,3 +7,5 @@ api/postalPincode.js
 api/referrals.ts
 api/types.ts
 api/components/
+.env
+configuration/.env

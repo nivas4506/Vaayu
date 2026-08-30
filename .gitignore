@@ -40,3 +40,4 @@ out/
 
 .vercel
 scratch/
+backend/src/scripts/
