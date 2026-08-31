@@ -31,4 +31,12 @@ export const ENV = {
   TWILIO_WHATSAPP_NUMBER: process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886',
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
+  // Custom Notification Provider Configuration
+  NOTIFICATION_PROVIDER: process.env.NOTIFICATION_PROVIDER || 'AUTO', // 'AUTO' | 'TWILIO' | 'FAST2SMS' | 'MSG91' | 'GSM_BRIDGE' | 'SIMULATOR'
+  FAST2SMS_API_KEY: process.env.FAST2SMS_API_KEY || '',
+  MSG91_AUTH_KEY: process.env.MSG91_AUTH_KEY || '',
+  TWOFACTOR_API_KEY: process.env.TWOFACTOR_API_KEY || '',
+  GSM_BRIDGE_ENDPOINT: process.env.GSM_BRIDGE_ENDPOINT || '', // e.g. http://192.168.1.50:8080/send
+  ENABLE_VOICE_CALLS: process.env.ENABLE_VOICE_CALLS === 'true' || true,
+  VOICE_CALL_FROM: process.env.VOICE_CALL_FROM || process.env.TWILIO_PHONE_NUMBER || '+13464856870',
 };

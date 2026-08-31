@@ -4,8 +4,8 @@ import { app } from '../backend/src/app.js';
 import { seedDatabase } from '../backend/src/db/seed.js';
 
 describe('Admin Analytics & Issues API', () => {
-  beforeEach(() => {
-    seedDatabase();
+  beforeEach(async () => {
+    await seedDatabase();
   });
 
   it('should return admin metrics dashboard payload for ADMIN role', async () => {

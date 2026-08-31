@@ -4,8 +4,8 @@ import { app } from '../backend/src/app.js';
 import { seedDatabase } from '../backend/src/db/seed.js';
 
 describe('Discovery & Ranking API (GET /api/v1/discover)', () => {
-  beforeEach(() => {
-    seedDatabase();
+  beforeEach(async () => {
+    await seedDatabase();
   });
 
   it('should return ranked facilities for a service request', async () => {

@@ -4,6 +4,7 @@ import { sendOtp, verifyOtp } from './auth.service.js';
 
 const sendOtpSchema = z.object({
   phone: z.string().min(5, 'Phone number is required'),
+  channel: z.enum(['sms', 'voice', 'whatsapp']).optional().default('sms'),
 });
 
 const verifyOtpSchema = z.object({
@@ -13,8 +14,8 @@ const verifyOtpSchema = z.object({
 
 export async function sendOtpController(req: Request, res: Response, next: NextFunction) {
   try {
-    const { phone } = sendOtpSchema.parse(req.body);
-    const result = await sendOtp(phone);
+    const { phone, channel } = sendOtpSchema.parse(req.body);
+    const result = await sendOtp({ phone, channel });
     return res.status(200).json({
       data: result,
       meta: { timestamp: new Date().toISOString() },

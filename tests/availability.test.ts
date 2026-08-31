@@ -4,8 +4,8 @@ import { app } from '../backend/src/app.js';
 import { seedDatabase } from '../backend/src/db/seed.js';
 
 describe('Availability & Freshness API', () => {
-  beforeEach(() => {
-    seedDatabase();
+  beforeEach(async () => {
+    await seedDatabase();
   });
 
   it('should submit a facility service availability update', async () => {

@@ -12,12 +12,24 @@ import { lookupPincodeController } from './modules/pincode/pincode.controller.js
 import { submitSosController, getSosStatusController } from './modules/sos/sos.controller.js';
 import { getHealthController, pingServiceController } from './modules/health/health.controller.js';
 import { sendOtpController, verifyOtpController } from './modules/auth/auth.controller.js';
+import {
+  sendSmsController,
+  sendWhatsAppController,
+  makeVoiceCallController,
+  sendSosBroadcastController,
+} from './modules/notifications/notifications.controller.js';
 
 export const apiRouter = Router();
 
-// Authentication & OTP Endpoints (Public)
+// Authentication & OTP Endpoints (Public - Supports SMS, Voice Call, WhatsApp)
 apiRouter.post('/auth/send-otp', sendOtpController);
 apiRouter.post('/auth/verify-otp', verifyOtpController);
+
+// Custom Multi-Channel Notification APIs (For Internal & External Applications)
+apiRouter.post('/notifications/sms', sendSmsController);
+apiRouter.post('/notifications/whatsapp', sendWhatsAppController);
+apiRouter.post('/notifications/voice-call', makeVoiceCallController);
+apiRouter.post('/notifications/sos-broadcast', sendSosBroadcastController);
 
 // Comprehensive Health & Telemetry Check Endpoints
 apiRouter.get('/health', getHealthController);

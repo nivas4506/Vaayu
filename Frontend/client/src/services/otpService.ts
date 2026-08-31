@@ -3,20 +3,23 @@ import { api } from './apiClient';
 export interface SendOtpResponse {
   success: boolean;
   message: string;
+  channel?: string;
   demoOtp?: string;
+  provider?: string;
   twilioStatus?: string;
 }
 
-export async function requestOtpApi(phone: string): Promise<SendOtpResponse> {
+export async function requestOtpApi(phone: string, channel: 'sms' | 'voice' | 'whatsapp' = 'sms'): Promise<SendOtpResponse> {
   try {
-    const res = await api.post<SendOtpResponse>('/auth/send-otp', { phone });
+    const res = await api.post<SendOtpResponse>('/auth/send-otp', { phone, channel });
     return res;
   } catch (err: any) {
     console.warn('[OTP Service] Backend send-otp failed, operating in offline demo mode:', err.message);
     const demoOtp = '482910';
     return {
       success: true,
-      message: `Offline mode: Demo OTP is ${demoOtp}`,
+      message: `Offline mode: Demo OTP is ${demoOtp} (${channel.toUpperCase()})`,
+      channel,
       demoOtp,
       twilioStatus: 'OFFLINE_FALLBACK',
     };

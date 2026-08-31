@@ -4,8 +4,8 @@ import { app } from '../backend/src/app.js';
 import { seedDatabase } from '../backend/src/db/seed.js';
 
 describe('Referral Coordination API (/api/v1/referrals)', () => {
-  beforeEach(() => {
-    seedDatabase();
+  beforeEach(async () => {
+    await seedDatabase();
   });
 
   it('should create a referral with a REF-XXXX public code', async () => {

@@ -4,8 +4,8 @@ import { app } from '../backend/src/app.js';
 import { seedDatabase } from '../backend/src/db/seed.js';
 
 describe('India Postal Pincode Lookup API (GET /api/v1/pincode/:code)', () => {
-  beforeEach(() => {
-    seedDatabase();
+  beforeEach(async () => {
+    await seedDatabase();
   });
 
   it('should lookup a valid 6-digit Indian PIN code and return district details + matching facilities', async () => {

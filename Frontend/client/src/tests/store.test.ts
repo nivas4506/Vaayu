@@ -10,8 +10,8 @@ describe('App State Store', () => {
     expect(state.facilities.find((f) => f.id === 'jabalpur_phc')?.name).toBe('Jabalpur Primary Health Centre');
   });
 
-  test('referral code generated', () => {
-    const code = useAppStore.getState().addReferral({
+  test('referral code generated', async () => {
+    const code = await useAppStore.getState().addReferral({
       patientName: 'Rani Dev', patientPhone: '9876512345', originFacilityId: 'jabalpur_phc',
       destFacilityId: 'seva_chc', requestedServiceId: 'blood_test', urgency: 'routine', status: 'created'
     });
@@ -19,11 +19,11 @@ describe('App State Store', () => {
     expect(useAppStore.getState().referrals.length).toBe(1);
   });
 
-  test('offline queues then syncs', () => {
-    useAppStore.getState().setOffline(true);
-    useAppStore.getState().addFeedback({ facilityId: 'jabalpur_phc', serviceId: 'blood_test', category: 'wrong_status', description: 'closed early', reporterRole: 'patient' });
+  test('offline queues then syncs', async () => {
+    await useAppStore.getState().setOffline(true);
+    await useAppStore.getState().addFeedback({ facilityId: 'jabalpur_phc', serviceId: 'blood_test', category: 'wrong_status', description: 'closed early', reporterRole: 'patient' });
     expect(useAppStore.getState().pendingSync.length).toBe(1);
-    useAppStore.getState().setOffline(false);
+    await useAppStore.getState().setOffline(false);
     expect(useAppStore.getState().pendingSync.length).toBe(0);
   });
 });

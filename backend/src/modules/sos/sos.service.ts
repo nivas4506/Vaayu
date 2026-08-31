@@ -1,6 +1,6 @@
 import { db } from '../../db/client.js';
 import { calculateDistanceKm } from '../discovery/discovery.service.js';
-import { sendSosAlertNotification } from '../notifications/twilio.service.js';
+import { sendMultiChannelSosAlert } from '../notifications/customNotification.service.js';
 
 export interface SosTriggerPayload {
   reporterId: string;
@@ -60,14 +60,15 @@ export function triggerSos(data: SosTriggerPayload) {
     now
   );
 
-  // 4. Dispatch emergency notification via SMS and WhatsApp (non-blocking)
+  // 4. Dispatch emergency multi-channel notification via SMS, WhatsApp & Automated Voice Call (non-blocking)
   if (data.contactPhone) {
-    sendSosAlertNotification({
+    sendMultiChannelSosAlert({
       emergencyContact: data.contactPhone,
       facilityName: nearestFacility?.name || 'Nearest Government Hospital',
       ambulanceId,
       location: { lat, lng },
       sosId: id,
+      reporterName: data.reporterRole,
     }).catch(err => console.error('[SOS Notification Error]:', err));
   }
 

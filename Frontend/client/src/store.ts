@@ -130,7 +130,7 @@ interface AppState {
 
   setLanguage: (lang: UserLanguage) => void;
   setRole: (role: UserRole) => void;
-  setOffline: (offline: boolean) => void;
+  setOffline: (offline: boolean) => Promise<void>;
   registerDemoUser: (input: RegisterInput) => DemoUser;
   signIn: (email: string, password: string) => { user?: DemoUser; error?: string };
   signInWithGoogle: (payload: { name: string; email: string; googleId: string; picture?: string; role?: UserRole }) => { user?: DemoUser; error?: string };
@@ -186,10 +186,10 @@ export const useAppStore = create<AppState>()(
 
         setRole: (role) => set({ role }),
 
-        setOffline: (isOffline) => {
+        setOffline: async (isOffline) => {
           set({ isOffline });
           if (!isOffline) {
-            get().syncPending();
+            await get().syncPending();
           }
         },
 
@@ -255,7 +255,7 @@ export const useAppStore = create<AppState>()(
               district: 'Jabalpur',
               address: 'Jabalpur District',
               language: get().language,
-              status: 'active',
+              status: payload.role === 'asha' ? 'pending' : 'active',
               createdAt: new Date().toISOString(),
             };
             set((s) => ({ users: [...s.users, found!] }));
